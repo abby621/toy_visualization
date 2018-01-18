@@ -44,7 +44,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
     crop_size = [224, 224]
     num_iters = 200000
     summary_iters = 10
-    save_iters = 5000
+    save_iters = 1000
 
     is_training = True
     if is_overfitting.lower()=='true':
@@ -150,7 +150,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
     init_op = tf.global_variables_initializer()
 
     # Create a saver for writing training checkpoints.
-    saver = tf.train.Saver(max_to_keep=20)
+    saver = tf.train.Saver(max_to_keep=500)
 
     # tf will consume any GPU it finds on the system. Following lines restrict it to specific gpus
     c = tf.ConfigProto()
