@@ -155,7 +155,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
 
     # tf will consume any GPU it finds on the system. Following lines restrict it to specific gpus
     c = tf.ConfigProto()
-    c.gpu_options.visible_device_list="0,1"
+    c.gpu_options.visible_device_list="2,3"
 
     print("Starting session...")
     sess = tf.Session(config=c)
