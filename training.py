@@ -2,9 +2,9 @@
 """
 # python mars_triplepalooza.py margin output_size learning_rate is_overfitting
 # If overfitting:
-# python tc_triplepalooza.py .3 50 128 .0001 True
+# python training.py .3 50 128 .0001 True
 # Else:
-# python tc_triplepalooza.py .3 120 128 .0001 False
+# python training.py .3 120 128 .0001 False
 """
 
 import tensorflow as tf
@@ -97,7 +97,6 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
     people_mask_batch = tf.placeholder(tf.float32, shape=[batch_size, crop_size[0], crop_size[0], 1])
     label_batch = tf.placeholder(tf.int32, shape=(batch_size))
 
-    after we've doctored everything, we need to remember to subtract off the mean
     repMeanIm = np.tile(np.expand_dims(train_data.meanImage,0),[batch_size,1,1,1])
     if train_data.isOverfitting:
         final_batch = tf.subtract(image_batch,repMeanIm)
