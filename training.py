@@ -35,8 +35,8 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
 
     signal.signal(signal.SIGINT, handler)
 
-    ckpt_dir = './output/traffickcam/ckpts'
-    log_dir = './output/traffickcam/logs'
+    ckpt_dir = './output/ckpts'
+    log_dir = './output/logs'
     train_filename = './train.txt'
     mean_file = '/project/focus/abby/triplepalooza/models/traffickcam/tc_mean_im.npy'
     pretrained_net = None
