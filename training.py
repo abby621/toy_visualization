@@ -94,7 +94,6 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
 
     # Queuing op loads data into input tensor
     image_batch = tf.placeholder(tf.float32, shape=[batch_size, crop_size[0], crop_size[0], 3])
-    people_mask_batch = tf.placeholder(tf.float32, shape=[batch_size, crop_size[0], crop_size[0], 1])
     label_batch = tf.placeholder(tf.int32, shape=(batch_size))
 
     repMeanIm = np.tile(np.expand_dims(train_data.meanImage,0),[batch_size,1,1,1])
@@ -170,8 +169,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
     for step in range(num_iters):
         start_time = time.time()
         batch, labels, ims = train_data.getBatch()
-        people_masks = train_data.getPeopleMasks()
-        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, people_mask_batch: people_masks,label_batch: labels})
+        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.6f (%.3f sec)' % (step, loss_val, duration)
