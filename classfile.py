@@ -8,7 +8,6 @@ Created on Fri Oct 14 11:49:13 2016
 import numpy as np
 import cv2
 import random
-from doctor_ims import *
 import glob
 
 class CombinatorialTripletSet:
