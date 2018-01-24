@@ -41,8 +41,8 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
         mean_file = '/Users/abby/Documents/repos/triplepalooza/models/traffickcam/tc_mean_im.npy'
     else:
         mean_file = '/project/focus/abby/triplepalooza/models/traffickcam/tc_mean_im.npy'
-    # pretrained_net = os.path.join(ckpt_dir,'checkpoint-201801181631_lr0pt0001_outputSz128_margin0pt3-5473')
-    pretrained_net = None
+    pretrained_net = os.path.join(ckpt_dir,'checkpoint-201801240955_lr0pt0001_outputSz128_margin0pt3-741')
+    # pretrained_net = None
     img_size = [256, 256]
     crop_size = [224, 224]
     num_iters = 200000
@@ -142,6 +142,8 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
 
     # loss = tf.reduce_sum(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))/batch_size
     loss = tf.reduce_mean(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))
+    regularizer = tf.nn.l2_loss(feat)
+    loss = tf.reduce_mean(loss + 0.01*regularizer)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
