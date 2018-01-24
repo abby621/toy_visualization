@@ -143,7 +143,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     # loss = tf.reduce_sum(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))/batch_size
     loss = tf.reduce_mean(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))
     regularizer = tf.nn.l2_loss(feat)
-    loss = tf.reduce_mean(loss + 0.01*regularizer)
+    loss = tf.reduce_mean(loss + 0.001*regularizer)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
