@@ -2,9 +2,9 @@
 """
 # python mars_triplepalooza.py margin output_size learning_rate is_overfitting
 # If overfitting:
-# python training.py .3 50 128 .0001 True
+# python training.py .3 50 128 .0001 True 2
 # Else:
-# python training.py .3 120 128 .0001 False
+# python training.py .3 120 128 .0001 False 2
 """
 
 import tensorflow as tf
@@ -24,7 +24,7 @@ import socket
 import signal
 import sys
 
-def main(margin,batch_size,output_size,learning_rate,is_overfitting):
+def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     def handler(signum, frame):
         print 'Saving checkpoint before closing'
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
@@ -161,7 +161,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
     # tf will consume any GPU it finds on the system. Following lines restrict it to specific gpus
     c = tf.ConfigProto()
     if not 'abby' in socket.gethostname().lower():
-        c.gpu_options.visible_device_list="2,3"
+        c.gpu_options.visible_device_list=whichGPU
 
     print("Starting session...")
     sess = tf.Session(config=c)
@@ -217,4 +217,5 @@ if __name__ == "__main__":
     output_size = args[3]
     learning_rate = args[4]
     is_overfitting = args[5]
-    main(margin,batch_size,output_size,learning_rate,is_overfitting)
+    whichGPU = args[6]
+    main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU)
