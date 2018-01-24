@@ -41,8 +41,8 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
         mean_file = '/Users/abby/Documents/repos/triplepalooza/models/traffickcam/tc_mean_im.npy'
     else:
         mean_file = '/project/focus/abby/triplepalooza/models/traffickcam/tc_mean_im.npy'
-    pretrained_net = os.path.join(ckpt_dir,'checkpoint-201801240955_lr0pt0001_outputSz128_margin0pt3-741')
-    # pretrained_net = None
+    # pretrained_net = os.path.join(ckpt_dir,'checkpoint-201801240955_lr0pt0001_outputSz128_margin0pt3-741')
+    pretrained_net = None
     img_size = [256, 256]
     crop_size = [224, 224]
     num_iters = 200000
