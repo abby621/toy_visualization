@@ -20,9 +20,8 @@ from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import math_ops
 import tensorflow.contrib.slim as slim
 from tensorflow.contrib.slim.python.slim.nets import resnet_v2
-
+import socket
 import signal
-import time
 import sys
 
 def main(margin,batch_size,output_size,learning_rate,is_overfitting):
@@ -38,7 +37,10 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
     ckpt_dir = './output/ckpts'
     log_dir = './output/logs'
     train_filename = './train.txt'
-    mean_file = '/project/focus/abby/triplepalooza/models/traffickcam/tc_mean_im.npy'
+    if 'abby' in socket.gethostname().lower():
+        mean_file = '/Users/abby/Documents/repos/triplepalooza/models/traffickcam/tc_mean_im.npy'
+    else:
+        mean_file = '/project/focus/abby/triplepalooza/models/traffickcam/tc_mean_im.npy'
     pretrained_net = None
     img_size = [256, 256]
     crop_size = [224, 224]
@@ -143,7 +145,9 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
-        train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
+        # train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
+        optimizer = tf.train.AdamOptimizer(learning_rate)
+        train_op = slim.learning.create_train_op(loss, optimizer)
 
     summary_op = tf.summary.merge_all()
     init_op = tf.global_variables_initializer()
@@ -153,7 +157,8 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting):
 
     # tf will consume any GPU it finds on the system. Following lines restrict it to specific gpus
     c = tf.ConfigProto()
-    c.gpu_options.visible_device_list="2,3"
+    if not 'abby' in socket.gethostname().lower():
+        c.gpu_options.visible_device_list="2,3"
 
     print("Starting session...")
     sess = tf.Session(config=c)
