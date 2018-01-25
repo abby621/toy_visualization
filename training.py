@@ -49,7 +49,8 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     summary_iters = 10
     save_iters = 1000
 
-    is_training = True
+    # is_training = True
+    is_training = False
     if is_overfitting.lower()=='true':
         is_overfitting = True
     else:
