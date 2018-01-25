@@ -50,7 +50,6 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     save_iters = 1000
 
     # is_training = True
-    is_training = False
     if is_overfitting.lower()=='true':
         is_overfitting = True
     else:
@@ -68,7 +67,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     num_pos_examples = batch_size/30
 
     # Create data "batcher"
-    train_data = CombinatorialTripletSet(train_filename, mean_file, img_size, crop_size, batch_size, num_pos_examples, isTraining=is_training, isOverfitting=is_overfitting)
+    train_data = CombinatorialTripletSet(train_filename, mean_file, img_size, crop_size, batch_size, num_pos_examples, isTraining=True, isOverfitting=is_overfitting)
     numClasses = len(train_data.files)
     numIms = np.sum([len(train_data.files[idx]) for idx in range(0,numClasses)])
     datestr = datetime.now().strftime("%Y%m%d%H%M")
@@ -109,7 +108,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
 
     print("Preparing network...")
     with slim.arg_scope(resnet_v2.resnet_arg_scope()):
-        _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=is_training)
+        _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=False)
 
     feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/pool5:0"),3))
     # weights = tf.squeeze(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/logits/weights:0"))
