@@ -2,9 +2,9 @@
 """
 # python mars_triplepalooza.py margin output_size learning_rate is_overfitting
 # If overfitting:
-# python training.py .3 50 128 .0001 True 2
+# python training.py .3 50 128 .0001 True '2'
 # Else:
-# python training.py .3 120 128 .0001 False 2
+# python training.py .3 120 128 .0001 False '2'
 """
 
 import tensorflow as tf
@@ -178,13 +178,14 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     for step in range(num_iters):
         start_time = time.time()
         batch, labels, ims = train_data.getBatch()
-        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels})
+        _, loss_val, vv = sess.run([train_op, loss, varvar], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.6f (%.3f sec)' % (step, loss_val, duration)
         # print(out_str)
         if step % summary_iters == 0 or is_overfitting:
             print(out_str)
+            print(vv)
             train_log_file.write(out_str+'\n')
         # Update the events file.
         # summary_str = sess.run(summary_op)
