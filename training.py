@@ -185,7 +185,6 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
         # print(out_str)
         if step % summary_iters == 0 or is_overfitting:
             print(out_str)
-            print(sess.run(varvar))
             train_log_file.write(out_str+'\n')
         # Update the events file.
         # summary_str = sess.run(summary_op)
