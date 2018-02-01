@@ -140,8 +140,8 @@ for idx in range(len(queryImsAndLabels)):
     if thisLabel in sortedLabels[:100]:
         testingAccuracy[idx,topHit:] = 1
 
-    if ctr%10 == 0:
-        print np.mean(testingAccuracy[:idx,:],axis=0)[0], np.mean(testingAccuracy[:idx,:]), np.mean(testingAccuracy[:idx,:],axis=0)[-1]
+    # if ctr%10 == 0:
+    #     print np.mean(testingAccuracy[:idx,:],axis=0)[0], np.mean(testingAccuracy[:idx,:]), np.mean(testingAccuracy[:idx,:],axis=0)[-1]
 
     # save_path = os.path.join(out_dir,str(ctr)+'_'+str(topHit)+'.jpg')
     # new_im.save(save_path)
