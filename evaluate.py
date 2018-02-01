@@ -38,7 +38,7 @@ datestr = datetime.now().strftime("%Y%m%d%H%M")
 
 c = tf.ConfigProto()
 # c.gpu_options.visible_device_list="1,2"
-c.gpu_options.visible_device_list="3"
+c.gpu_options.visible_device_list="2""
 
 # TODO: Fix issue where slim isn't using batch statistics -- need to save those during training
 batch_size = 120
