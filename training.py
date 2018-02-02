@@ -30,6 +30,8 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
         saver.save(sess, pretrained_net, global_step=step)
         print 'Checkpoint-',pretrained_net+'-'+str(step), ' saved!'
+        vv = sess.run(varvar, feed_dict={image_batch: batch, label_batch: labels})
+        print vv
         sys.exit(0)
 
     signal.signal(signal.SIGINT, handler)
@@ -108,7 +110,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
 
     print("Preparing network...")
     with slim.arg_scope(resnet_v2.resnet_arg_scope()):
-        _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True)
+        _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True,scope=resnet_v2.resnet_arg_scope())
 
     feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/pool5:0"),3))
     varvar = tf.get_default_graph().get_tensor_by_name("resnet_v2_50/postnorm/moving_variance:0")
