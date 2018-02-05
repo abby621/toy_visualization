@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image
 import random
 import tensorflow.contrib.slim as slim
-from tensorflow.contrib.slim.python.slim.nets import resnet_v2
+from nets import resnet_v2
 import socket
 
 def getDist(feat,otherFeats):
@@ -25,7 +25,7 @@ def getDist(feat,otherFeats):
     return dist
 
 test_file = './val.txt'
-pretrained_net = './output/ckpts/checkpoint-201802010945_lr0pt0001_outputSz128_margin0pt3-1264'
+pretrained_net = './output/ckpts/checkpoint-201802021512_lr0pt0001_outputSz128_margin0pt3-302'
 # pretrained_net = './output/ckpts/TEST--90'
 img_size = [256, 256]
 crop_size = [227, 227]
@@ -50,12 +50,13 @@ label_batch = tf.placeholder(tf.int32, shape=(batch_size))
 
 print("Preparing network...")
 with slim.arg_scope(resnet_v2.resnet_arg_scope()):
-    _, layers = resnet_v2.resnet_v2_50(image_batch, num_classes=output_size, is_training=True)
+    _, layers = resnet_v2.resnet_v2_50(image_batch, num_classes=output_size, is_training=False,scope=resnet_v2.variable_scope.get_variable_scope())
+    # _, layers = resnet_v2.resnet_v2_50(image_batch, num_classes=output_size, is_training=False,scope=resnet_v2.variable_scope.get_variable_scope())
 
-feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/pool5:0"),3))
+feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
 
-varvar = tf.get_default_graph().get_tensor_by_name("resnet_v2_50/postnorm/moving_variance:0")
-meanmean = tf.get_default_graph().get_tensor_by_name("resnet_v2_50/postnorm/moving_mean:0")
+# a1_varvar1 = tf.get_default_graph().get_tensor_by_name("block1/unit_1/bottleneck_v2/conv1/BatchNorm/AssignMovingAvg:0")
+# a1_varvar2 = tf.get_default_graph().get_tensor_by_name("block1/unit_1/bottleneck_v2/conv1/BatchNorm/AssignMovingAvg_1:0")
 
 # Create data "batcher"
 test_data = CombinatorialTripletSet(test_file, mean_file, img_size, crop_size, batch_size, isTraining=False)
@@ -63,11 +64,13 @@ test_data = CombinatorialTripletSet(test_file, mean_file, img_size, crop_size, b
 # Create a saver for writing loading checkpoints.
 saver = tf.train.Saver()
 
-sess = tf.Session(config=c)
-# init_op = tf.global_variables_initializer()
-# sess.run(init_op)
+sess = tf.InteractiveSession(config=c)
+init_op = tf.global_variables_initializer()
+sess.run(init_op)
+
 # Here's where we need to load saved weights
 saver.restore(sess, pretrained_net)
+update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
 # testingImsAndLabels = [(test_data.files[ix][iy],test_data.classes[ix]) for ix in range(len(test_data.files)) for iy in range(len(test_data.files[ix]))]
 testingImsAndLabels = [(test_data.files[ix][iy],test_data.classes[ix]) for ix in range(len(test_data.files)) for iy in range(10)]
@@ -100,8 +103,7 @@ for step in range(0,num_iters):
         labels += [labels[-1]]
         batch = np.vstack((batch,np.expand_dims(batch[-1],0)))
 
-    ff,vv,mm = sess.run([feat,varvar,meanmean], feed_dict={image_batch: batch, label_batch:labels})
-    print vv
+    ff = sess.run(feat, feed_dict={image_batch: batch, label_batch:labels})
     testingFeats[step*batch_size:end_ind,:] = ff[:len(il),:]
 
 def combine_horz(ims):
@@ -148,16 +150,15 @@ for idx in range(len(queryImsAndLabels)):
     topMatchIm3 = testingIms[sortedInds[2]]
     topMatchIm4 = testingIms[sortedInds[3]]
     topMatchIm5 = testingIms[sortedInds[4]]
-    new_im = combine_horz([thisIm,topMatchIm1,topMatchIm2,topMatchIm3,topMatchIm4,topMatchIm5,topHitIm])
+    # new_im = combine_horz([thisIm,topMatchIm1,topMatchIm2,topMatchIm3,topMatchIm4,topMatchIm5,topHitIm])
 
     if thisLabel in sortedLabels[:100]:
         testingAccuracy[idx,topHit:] = 1
 
     # if ctr%10 == 0:
     #     print np.mean(testingAccuracy[:idx,:],axis=0)[0], np.mean(testingAccuracy[:idx,:]), np.mean(testingAccuracy[:idx,:],axis=0)[-1]
-
-    save_path = os.path.join(out_dir,str(ctr)+'_'+str(topHit)+'.jpg')
-    new_im.save(save_path)
+    # save_path = os.path.join(out_dir,str(ctr)+'_'+str(topHit)+'.jpg')
+    # new_im.save(save_path)
     ctr += 1
 
 randomSuccess = np.zeros((len(queryImsAndLabels),100,1000))
