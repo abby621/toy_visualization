@@ -70,8 +70,8 @@ sess.run(init_op)
 saver.restore(sess, pretrained_net)
 update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
-# testingImsAndLabels = [(test_data.files[ix][iy],test_data.classes[ix]) for ix in range(len(test_data.files)) for iy in range(len(test_data.files[ix]))]
-testingImsAndLabels = [(test_data.files[ix][iy],test_data.classes[ix]) for ix in range(len(test_data.files)) for iy in range(10)]
+testingImsAndLabels = [(test_data.files[ix][iy],test_data.classes[ix]) for ix in range(len(test_data.files)) for iy in range(len(test_data.files[ix]))]
+# testingImsAndLabels = [(test_data.files[ix][iy],test_data.classes[ix]) for ix in range(len(test_data.files)) for iy in range(10)]
 numTestingIms = batch_size*(len(testingImsAndLabels)/batch_size)
 testingImsAndLabels = testingImsAndLabels[:numTestingIms]
 # numTestingIms = len(testingImsAndLabels)
