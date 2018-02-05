@@ -52,10 +52,9 @@ print("Preparing network...")
 with slim.arg_scope(resnet_v2.resnet_arg_scope()):
     _, layers = resnet_v2.resnet_v2_50(image_batch, num_classes=output_size, is_training=False)
 
-feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
-
-# a1_varvar1 = tf.get_default_graph().get_tensor_by_name("block1/unit_1/bottleneck_v2/conv1/BatchNorm/AssignMovingAvg:0")
-# a1_varvar2 = tf.get_default_graph().get_tensor_by_name("block1/unit_1/bottleneck_v2/conv1/BatchNorm/AssignMovingAvg_1:0")
+# feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
+featLayer = 'resnet_v2_50/logits'
+feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
 
 # Create data "batcher"
 test_data = CombinatorialTripletSet(test_file, mean_file, img_size, crop_size, batch_size, isTraining=False)
@@ -149,29 +148,29 @@ for idx in range(len(queryImsAndLabels)):
     topMatchIm3 = testingIms[sortedInds[2]]
     topMatchIm4 = testingIms[sortedInds[3]]
     topMatchIm5 = testingIms[sortedInds[4]]
-    # new_im = combine_horz([thisIm,topMatchIm1,topMatchIm2,topMatchIm3,topMatchIm4,topMatchIm5,topHitIm])
+    new_im = combine_horz([thisIm,topMatchIm1,topMatchIm2,topMatchIm3,topMatchIm4,topMatchIm5,topHitIm])
 
     if thisLabel in sortedLabels[:100]:
         testingAccuracy[idx,topHit:] = 1
 
     # if ctr%10 == 0:
     #     print np.mean(testingAccuracy[:idx,:],axis=0)[0], np.mean(testingAccuracy[:idx,:]), np.mean(testingAccuracy[:idx,:],axis=0)[-1]
-    # save_path = os.path.join(out_dir,str(ctr)+'_'+str(topHit)+'.jpg')
-    # new_im.save(save_path)
+    save_path = os.path.join(out_dir,str(ctr)+'_'+str(topHit)+'.jpg')
+    new_im.save(save_path)
     ctr += 1
 
-randomSuccess = np.zeros((len(queryImsAndLabels),100,1000))
-for ctr in range(1000):
-    for idx in range(len(queryImsAndLabels)):
-        thisLabel = queryImsAndLabels[idx][1]
-        randLabels = random.sample(testingLabels[np.arange(len(testingLabels))!=idx],100)
-        topHit = np.where(sortedLabels==thisLabel)[0][0]
-        if thisLabel in sortedLabels[:100]:
-            randomSuccess[idx,topHit:,ctr] = 1
-
-print '---Triplepalooza--'
-print 'Random:'
-print np.mean(np.mean(randomSuccess,axis=2),axis=0)
+# randomSuccess = np.zeros((len(queryImsAndLabels),100,1000))
+# for ctr in range(1000):
+#     for idx in range(len(queryImsAndLabels)):
+#         thisLabel = queryImsAndLabels[idx][1]
+#         randLabels = random.sample(testingLabels[np.arange(len(testingLabels))!=idx],100)
+#         topHit = np.where(sortedLabels==thisLabel)[0][0]
+#         if thisLabel in sortedLabels[:100]:
+#             randomSuccess[idx,topHit:,ctr] = 1
+#
+# print '---Triplepalooza--'
+# print 'Random:'
+# print np.mean(np.mean(randomSuccess,axis=2),axis=0)
 print 'Network: ', pretrained_net
 print 'NN Test Accuracy: ',np.mean(testingAccuracy,axis=0)
 print 'Example directory: ', out_dir
