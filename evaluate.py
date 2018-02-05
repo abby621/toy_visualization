@@ -49,7 +49,7 @@ image_batch = tf.placeholder(tf.float32, shape=[batch_size, crop_size[0], crop_s
 label_batch = tf.placeholder(tf.int32, shape=(batch_size))
 
 print("Preparing network...")
-with slim.arg_scope(resnet_v2.resnet_arg_scope()):
+with slim.arg_scope(resnet_v2.resnet_arg_scope(is_training=False)):
     _, layers = resnet_v2.resnet_v2_50(image_batch, num_classes=output_size, is_training=False)
 
 # feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
