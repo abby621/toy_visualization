@@ -19,7 +19,7 @@ from tensorflow.python.ops import gen_image_ops
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import math_ops
 import tensorflow.contrib.slim as slim
-from tensorflow.contrib.slim.python.slim.nets import resnet_v2
+from nets import resnet_v2
 import socket
 import signal
 import sys
@@ -110,10 +110,12 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
 
     print("Preparing network...")
     with slim.arg_scope(resnet_v2.resnet_arg_scope()):
-        _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True,scope=resnet_v2.variable_scope.get_variable_scope())
+        _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True)
 
-    feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
-    varvar = tf.get_default_graph().get_tensor_by_name("postnorm/moving_variance:0")
+    featLayer = 'resnet_v1_50/logits'
+    feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
+    # feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
+    # varvar = tf.get_default_graph().get_tensor_by_name("postnorm/moving_variance:0")
     # weights = tf.squeeze(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/logits/weights:0"))
 
     expanded_a = tf.expand_dims(feat, 1)
@@ -180,14 +182,13 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     for step in range(num_iters):
         start_time = time.time()
         batch, labels, ims = train_data.getBatch()
-        _, _, loss_val, vv = sess.run([train_op, update_ops, loss, varvar], feed_dict={image_batch: batch, label_batch: labels})
+        _, _, loss_val = sess.run([train_op, update_ops, loss], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.6f (%.3f sec)' % (step, loss_val, duration)
         # print(out_str)
         if step % summary_iters == 0 or is_overfitting:
             print(out_str)
-            print(vv)
             train_log_file.write(out_str+'\n')
         # Update the events file.
         # summary_str = sess.run(summary_op)
