@@ -108,7 +108,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
 
     print("Preparing network...")
     with slim.arg_scope(resnet_v2.resnet_arg_scope()):
-        _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True)
+        _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=False)
 
     featLayer = 'resnet_v2_50/logits'
     feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
