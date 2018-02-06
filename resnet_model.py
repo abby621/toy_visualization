@@ -77,12 +77,12 @@ class ResNet(object):
       filters = [16, 64, 128, 256]
     else:
       res_func = self._residual
-      filters = [16, 16, 32, 64]
+      # filters = [16, 16, 32, 64]
       # Uncomment the following codes to use w28-10 wide residual network.
       # It is more memory efficient than very deep residual network and has
       # comparably good performance.
       # https://arxiv.org/pdf/1605.07146v1.pdf
-      # filters = [16, 160, 320, 640]
+      filters = [16, 160, 320, 640]
       # Update hps.num_residual_units to 4
 
     with tf.variable_scope('unit_1_0'):
