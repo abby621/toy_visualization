@@ -60,11 +60,11 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     output_size = int(output_size)
     learning_rate = float(learning_rate)
 
-    if batch_size%10 != 0:
-        print 'Batch size must be divisible by 10!'
+    if batch_size%30 != 0:
+        print 'Batch size must be divisible by 30!'
         sys.exit(0)
 
-    num_pos_examples = batch_size/10
+    num_pos_examples = batch_size/30
 
     # Create data "batcher"
     train_data = CombinatorialTripletSet(train_filename, mean_file, img_size, crop_size, batch_size, num_pos_examples, isTraining=True, isOverfitting=is_overfitting)
@@ -107,12 +107,13 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
         final_batch = tf.add(tf.subtract(image_batch,repMeanIm),noise)
 
     print("Preparing network...")
-    with slim.arg_scope(resnet_v2.resnet_arg_scope(batch_norm_decay=.9)):
+    with slim.arg_scope(resnet_v2.resnet_arg_scope(batch_norm_decay=.001)):
         _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True, scope='resnet')
 
     featLayer = 'resnet/logits'
     feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
     # feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
+    varvar = tf.get_default_graph().get_tensor_by_name(resnet_v2_50/block1/unit_1/bottleneck_v2/conv1/BatchNorm/moving_mean:0")
 
     expanded_a = tf.expand_dims(feat, 1)
     expanded_b = tf.expand_dims(feat, 0)
@@ -153,9 +154,6 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
         optimizer = tf.train.AdamOptimizer(learning_rate)
         train_op = slim.learning.create_train_op(loss, optimizer)
 
-    summary_op = tf.summary.merge_all()
-    init_op = tf.global_variables_initializer()
-
     # Create a saver for writing training checkpoints.
     saver = tf.train.Saver(max_to_keep=500)
 
@@ -166,6 +164,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
 
     print("Starting session...")
     sess = tf.Session(config=c)
+    init_op = tf.global_variables_initializer()
     sess.run(init_op)
 
     writer = tf.summary.FileWriter(log_dir, sess.graph)
@@ -178,13 +177,14 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     for step in range(num_iters):
         start_time = time.time()
         batch, labels, ims = train_data.getBatch()
-        _, _, loss_val = sess.run([train_op, update_ops, loss], feed_dict={image_batch: batch, label_batch: labels})
+        _, _, vv, loss_val = sess.run([train_op, update_ops, varvar, loss], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.6f (%.3f sec)' % (step, loss_val, duration)
         # print(out_str)
         if step % summary_iters == 0 or is_overfitting:
             print(out_str)
+            print vv
             train_log_file.write(out_str+'\n')
         # Update the events file.
         # summary_str = sess.run(summary_op)
