@@ -32,7 +32,7 @@ from tensorflow.python.training import moving_averages
 HParams = namedtuple('HParams',
                      'batch_size, num_classes, '
                      'num_residual_units, use_bottleneck, weight_decay_rate, '
-                     'relu_leakiness, optimizer')
+                     'relu_leakiness')
 
 
 class ResNet(object):
@@ -58,8 +58,6 @@ class ResNet(object):
     """Build a whole graph for the model."""
     self.global_step = tf.train.get_or_create_global_step()
     self._build_model()
-    if self.mode == 'train':
-      self._build_train_op()
     self.summaries = tf.summary.merge_all()
 
   def _stride_arr(self, stride):
