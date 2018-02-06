@@ -19,7 +19,8 @@ from tensorflow.python.ops import gen_image_ops
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import math_ops
 import tensorflow.contrib.slim as slim
-from nets import resnet_v2
+# from nets import resnet_v2
+from nets import vgg
 import socket
 import signal
 import sys
@@ -72,7 +73,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     numIms = np.sum([len(train_data.files[idx]) for idx in range(0,numClasses)])
     datestr = datetime.now().strftime("%Y_%m_%d_%H%M")
     param_str = datestr+'_lr'+str(learning_rate).replace('.','pt')+'_outputSz'+str(output_size)+'_margin'+str(margin).replace('.','pt')
-    logfile_path = os.path.join(log_dir)+param_str+'_train.txt'
+    logfile_path = os.path.join(log_dir,param_str+'_train.txt'
     train_log_file = open(logfile_path,'a')
     print '------------'
     print ''
@@ -107,14 +108,20 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
         final_batch = tf.add(tf.subtract(image_batch,repMeanIm),noise)
 
     print("Preparing network...")
-    with slim.arg_scope(resnet_v2.resnet_arg_scope(batch_norm_decay=.75)):
-        _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True)
+    # with slim.arg_scope(resnet_v2.resnet_arg_scope(batch_norm_decay=.75)):
+    #     _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True)
+    #
+    # featLayer = 'resnet_v2_50/logits'
+    # feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
+    # # feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
 
-    featLayer = 'resnet_v2_50/logits'
-    feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
-    # feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
-    # varvar = tf.get_default_graph().get_tensor_by_name("postnorm/moving_variance:0")
-    # weights = tf.squeeze(tf.get_default_graph().get_tensor_by_name("resnet_v2_50/logits/weights:0"))
+    with slim.arg_scope(vgg.vgg_arg_scope()):
+        outputs, layers = vgg.vgg_16(final_batch, num_classes=output_size, is_training=True,global_pool=True)
+
+    featLayer = 'vgg_16/fc8'
+    feat = tf.nn.l2_normalize(layers[featLayer],1)
+    # featLayer = 'global_pool'
+    # feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
 
     expanded_a = tf.expand_dims(feat, 1)
     expanded_b = tf.expand_dims(feat, 0)
