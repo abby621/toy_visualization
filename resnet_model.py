@@ -112,8 +112,8 @@ class ResNet(object):
       x = self._global_avg_pool(x)
 
     with tf.variable_scope('logit'):
-      logits = self._fully_connected(x, self.hps.num_classes)
-      self.predictions = tf.nn.softmax(logits)
+      self.logits = self._fully_connected(x, self.hps.num_classes)
+      self.predictions = tf.nn.softmax(self.logits)
 
   # TODO(xpan): Consider batch_norm in contrib/layers/python/layers/layers.py
   def _batch_norm(self, name, x):
