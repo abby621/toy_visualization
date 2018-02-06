@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-# python mars_triplepalooza.py margin output_size learning_rate is_overfitting whichGPU
-# python training.py .3 60 256 .00005 False '2'
+# python training2.py margin output_size learning_rate is_overfitting whichGPU
+# python training2.py .3 60 256 .00005 False '2'
 """
 
 import tensorflow as tf
@@ -124,19 +124,17 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
         c.gpu_options.visible_device_list=whichGPU
 
     summary_hook = tf.train.SummarySaverHook(
-      save_steps=100,
-      output_dir=ckpt_dir,
-      summary_op=tf.summary.merge([model.summaries,
-                                   tf.summary.scalar('Precision', precision)]))
+        save_steps=100,
+        output_dir=log_dir,
+        summary_op=tf.summary.merge([model.summaries]))
 
     logging_hook = tf.train.LoggingTensorHook(
-      tensors={'step': model.global_step,
+        tensors={'step': model.global_step,
                'loss': loss},
-      every_n_iter=100)
+        every_n_iter=100)
 
-     print("Starting session...")
      with tf.train.MonitoredTrainingSession(
-            checkpoint_dir=out_dir,
+            checkpoint_dir=ckpt_dir,
             hooks=[logging_hook],
             chief_only_hooks=[summary_hook],
             save_summaries_steps=0,
