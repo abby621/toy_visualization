@@ -25,7 +25,7 @@ def getDist(feat,otherFeats):
     return dist
 
 test_file = './val.txt'
-pretrained_net = './output/ckpts/checkpoint-2018_02_05_1503_lr5e-05_outputSz128_margin0pt3-1834'
+pretrained_net = './output/ckpts/checkpoint-2018_02_05_1638_lr0pt0001_outputSz128_margin0pt3-22874'
 # pretrained_net = './output/ckpts/TEST--90'
 img_size = [256, 256]
 crop_size = [227, 227]
