@@ -134,6 +134,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
             config=c) as sess:
         step = 0
         while step < num_iters:
+            print step
             start_time = time.time()
             batch, labels, ims = train_data.getBatch()
             _, step, loss_val = sess.run([train_ops, model.global_step, loss], feed_dict={image_batch: batch, label_batch: labels})
