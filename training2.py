@@ -123,13 +123,11 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     if not 'abby' in socket.gethostname().lower():
         c.gpu_options.visible_device_list=whichGPU
 
-    summary_hook = tf.train.SummarySaverHook(save_steps=100,output_dir=log_dir,summary_op=tf.summary.merge([model.summaries]))
+    checkpoint_hook = tf.train.CheckpointSaverHook(ckpt_dir,save_steps=save_iters,saver=saver,checkpoint_basename=param_str+'.ckpt')
     logging_hook = tf.train.LoggingTensorHook(tensors={'step': model.global_step,'loss': loss},every_n_iter=100)
 
     sess = tf.train.MonitoredTrainingSession(
-            checkpoint_dir=ckpt_dir,
-            hooks=[logging_hook],
-            chief_only_hooks=[summary_hook],
+            hooks=[checkpoint_hook,logging_hook],
             save_summaries_steps=0,
             config=c)
 
