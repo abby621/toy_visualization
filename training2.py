@@ -132,11 +132,11 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
             chief_only_hooks=[summary_hook],
             save_summaries_steps=0,
             config=c) as sess:
-         step = 0
-         while step < num_iters:
-             start_time = time.time()
-             batch, labels, ims = train_data.getBatch()
-             _, step, loss_val = sess.run([train_ops, model.global_step, loss], feed_dict={image_batch: batch, label_batch: labels})
+        step = 0
+        while step < num_iters:
+            start_time = time.time()
+            batch, labels, ims = train_data.getBatch()
+            _, step, loss_val = sess.run([train_ops, model.global_step, loss], feed_dict={image_batch: batch, label_batch: labels})
             end_time = time.time()
             duration = end_time-start_time
             out_str = 'Step %d: loss = %.6f (%.3f sec)' % (step, loss_val, duration)
