@@ -113,7 +113,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     featLayer = 'resnet/logits'
     feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
     # feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
-    varvar = tf.get_default_graph().get_tensor_by_name("resnet_v2_50/block1/unit_1/bottleneck_v2/conv1/BatchNorm/moving_average:0")
+    varvar = tf.get_default_graph().get_tensor_by_name("resnet/block1/unit_1/bottleneck_v2/conv1/BatchNorm/moving_mean:0")
 
     expanded_a = tf.expand_dims(feat, 1)
     expanded_b = tf.expand_dims(feat, 0)
