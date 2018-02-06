@@ -126,20 +126,20 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     summary_hook = tf.train.SummarySaverHook(save_steps=100,output_dir=log_dir,summary_op=tf.summary.merge([model.summaries]))
     logging_hook = tf.train.LoggingTensorHook(tensors={'step': model.global_step,'loss': loss},every_n_iter=100)
 
-    with tf.train.MonitoredTrainingSession(
+    sess = tf.train.MonitoredTrainingSession(
             checkpoint_dir=ckpt_dir,
             hooks=[logging_hook],
             chief_only_hooks=[summary_hook],
             save_summaries_steps=0,
-            config=c) as sess:
-        step = 0
-        while step < num_iters:
-            print step
-            start_time = time.time()
-            batch, labels, ims = train_data.getBatch()
-            _, step, loss_val = sess.run([train_ops, model.global_step, loss], feed_dict={image_batch: batch, label_batch: labels})
-            end_time = time.time()
-            duration = end_time-start_time
-            out_str = 'Step %d: loss = %.6f (%.3f sec)' % (step, loss_val, duration)
-            if step%10 == 0:
-                print(out_str)
+            config=c)
+
+    step = 0
+    while step < num_iters:
+        start_time = time.time()
+        batch, labels, ims = train_data.getBatch()
+        _, step, loss_val = sess.run([train_ops, model.global_step, loss], feed_dict={image_batch: batch, label_batch: labels})
+        end_time = time.time()
+        duration = end_time-start_time
+        out_str = 'Step %d: loss = %.6f (%.3f sec)' % (step, loss_val, duration)
+        if step%10 == 0:
+            print(out_str)
