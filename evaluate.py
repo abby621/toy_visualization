@@ -25,7 +25,7 @@ def getDist(feat,otherFeats):
     return dist
 
 test_file = './val.txt'
-pretrained_net = './output/ckpts/checkpoint-2018_02_07_0902_lr0pt0001_outputSz1000_margin0pt3-1008'
+pretrained_net = './output/ckpts/checkpoint-2018_02_07_0903_lr0pt0001_outputSz1000_margin0pt3-1271'
 # pretrained_net = './output/ckpts/TEST--90'
 img_size = [256, 256]
 crop_size = [227, 227]
@@ -49,7 +49,7 @@ image_batch = tf.placeholder(tf.float32, shape=[batch_size, crop_size[0], crop_s
 label_batch = tf.placeholder(tf.int32, shape=(batch_size))
 
 print("Preparing network...")
-with slim.arg_scope(resnet_v2.resnet_arg_scope(batch_norm_decay=.997)):
+with slim.arg_scope(resnet_v2.resnet_arg_scope(batch_norm_decay=.001)):
     _, layers = resnet_v2.resnet_v2_50(image_batch, num_classes=output_size, is_training=True,scope='resnet')
 
 # feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
