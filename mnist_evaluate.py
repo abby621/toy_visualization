@@ -24,8 +24,8 @@ def getDist(feat,otherFeats):
     # dist = np.array([np.dot(feat,otherFeat) for otherFeat in otherFeats])
     return dist
 
-test_file = './val.txt'
-pretrained_net = './output/ckpts/checkpoint-2018_02_07_1241_lr0pt0001_outputSz1000_margin0pt3-24999'
+test_file = './mnist_val.txt'
+pretrained_net = './output/ckpts/mnist/checkpoint-2018_02_08_0945_lr0pt0001_outputSz10_margin0pt3-1433'
 # pretrained_net = './output/ckpts/TEST--90'
 img_size = [32, 32]
 crop_size = [29, 29]
@@ -65,8 +65,8 @@ sess.run(init_op)
 # Here's where we need to load saved weights
 saver.restore(sess, pretrained_net)
 
-# testingImsAndLabels = [(test_data.files[ix][iy],test_data.classes[ix]) for ix in range(len(test_data.files)) for iy in range(len(test_data.files[ix]))]
-testingImsAndLabels = [(test_data.files[ix][iy],test_data.classes[ix]) for ix in range(len(test_data.files)) for iy in range(10)]
+testingImsAndLabels = [(test_data.files[ix][iy],test_data.classes[ix]) for ix in range(len(test_data.files)) for iy in range(len(test_data.files[ix]))]
+# testingImsAndLabels = [(test_data.files[ix][iy],test_data.classes[ix]) for ix in range(len(test_data.files)) for iy in range(10)]
 numTestingIms = batch_size*(len(testingImsAndLabels)/batch_size)
 testingImsAndLabels = testingImsAndLabels[:numTestingIms]
 # numTestingIms = len(testingImsAndLabels)
