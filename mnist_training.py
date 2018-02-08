@@ -29,7 +29,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     ckpt_dir = './output/ckpts/mnist'
     log_dir = './output/logs/mnist'
     train_filename = './mnist_train.txt'
-    mean_file = '/project/focus/abby/triplepalooza/models/traffickcam/tc_mean_im.npy'
+    mean_file = '/project/focus/datasets/mnist/mnist_mean.npy'
     # pretrained_net = os.path.join(ckpt_dir,'checkpoint-201801240955_lr0pt0001_outputSz128_margin0pt3-741')
     pretrained_net = None
     img_size = [32, 32]
