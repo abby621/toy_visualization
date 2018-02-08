@@ -107,7 +107,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
         final_batch = tf.add(tf.subtract(image_batch,repMeanIm),noise)
 
     print("Preparing network...")
-    with slim.arg_scope(resnet_v2.resnet_arg_scope(batch_norm_decay=.997)):
+    with slim.arg_scope(resnet_v2.resnet_arg_scope(batch_norm_decay=.9)):
         _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True, scope='resnet')
 
     featLayer = 'resnet/logits'
@@ -184,7 +184,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
         # print(out_str)
         if step % summary_iters == 0 or is_overfitting:
             print(out_str)
-            print vv
+            print vv[0:5]
             train_log_file.write(out_str+'\n')
         # Update the events file.
         # summary_str = sess.run(summary_op)
