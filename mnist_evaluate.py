@@ -46,7 +46,7 @@ label_batch = tf.placeholder(tf.int32, shape=(batch_size))
 
 print("Preparing network...")
 with slim.arg_scope(resnet_v2.resnet_arg_scope()):
-    _, layers = resnet_v2.resnet_v2_50(image_batch, num_classes=output_size, is_training=False,scope='resnet')
+    _, layers = resnet_v2.resnet_v2_50(image_batch, num_classes=output_size, is_training=True,scope='resnet')
 
 # feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
 featLayer = 'resnet/logits'
