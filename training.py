@@ -69,7 +69,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     numClasses = len(train_data.files)
     numIms = np.sum([len(train_data.files[idx]) for idx in range(0,numClasses)])
     datestr = datetime.now().strftime("%Y_%m_%d_%H%M")
-    param_str = datestr+'_lr'+str(learning_rate).replace('.','pt')+'_outputSz'+str(output_size)+'_margin'+str(margin).replace('.','pt')
+    param_str = datestr+'_lr'+str(learning_rate).replace('.','pt')+'_outputSz'+str(output_size)+'_margin'+str(margin).replace('.','pt')+'_l1wgt'+str(l1_weight).replace('.','pt')
     logfile_path = os.path.join(log_dir,param_str+'_train.txt')
     train_log_file = open(logfile_path,'a')
     print '------------'
