@@ -141,9 +141,9 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     mask = ((1-bad_negatives)*(1-bad_positives)).astype('float32')
 
     # loss = tf.reduce_sum(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))/batch_size
-    loss = tf.reduce_mean(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))
+    base_loss = tf.reduce_mean(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))
     l1_loss = tf.multiply(l1_weight, tf.reduce_sum(tf.abs(feat)))
-    loss = tf.reduce_mean(loss + l1_loss)
+    loss = base_loss + l1_loss
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -175,10 +175,10 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     for step in range(num_iters):
         start_time = time.time()
         batch, labels, ims = train_data.getBatch()
-        _, _, loss_val = sess.run([train_op, update_ops, loss], feed_dict={image_batch: batch, label_batch: labels})
+        _, loss_val, bl, l1 = sess.run([train_op, loss, base_loss, l1_loss], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
-        out_str = 'Step %d: loss = %.6f (%.3f sec)' % (step, loss_val, duration)
+        out_str = 'Step %d: loss = %.6f (%.3f from loss, %.3f from l1) -- (%.3f sec)' % (step, loss_val, b1, l1, duration)
         # print(out_str)
         if step % summary_iters == 0 or is_overfitting:
             print(out_str)
