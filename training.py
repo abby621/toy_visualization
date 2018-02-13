@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-# python mars_triplepalooza.py margin output_size learning_rate is_overfitting
-# If overfitting:
-# python training.py .3 50 128 .0001 True '2'
-# Else:
-# python training.py .3 120 1000 .0001 False '2'
+# python mars_triplepalooza.py margin output_size learning_rate is_overfitting l1_weight
+# python training.py .3 120 1000 .0001 False '2' .5
 """
 
 import tensorflow as tf
@@ -24,7 +21,7 @@ import socket
 import signal
 import sys
 
-def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
+def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight):
     def handler(signum, frame):
         print 'Saving checkpoint before closing'
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
@@ -59,6 +56,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
     batch_size = int(batch_size)
     output_size = int(output_size)
     learning_rate = float(learning_rate)
+    l1_weight = float(l1_weight)
 
     if batch_size%30 != 0:
         print 'Batch size must be divisible by 30!'
@@ -144,7 +142,6 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
 
     # loss = tf.reduce_sum(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))/batch_size
     loss = tf.reduce_mean(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))
-    l1_weight = 0.005
     l1_loss = tf.multiply(l1_weight, tf.reduce_sum(tf.abs(feat)))
     loss = tf.reduce_mean(loss + l1_loss)
 
@@ -212,11 +209,12 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU):
 if __name__ == "__main__":
     args = sys.argv
     if len(args) < 5:
-        print 'Expected four input parameters: margin, output_size, learning_rate, is_overfitting'
+        print 'Expected four input parameters: margin, output_size, learning_rate, is_overfitting, whichGPU, l1_weight'
     margin = args[1]
     batch_size = args[2]
     output_size = args[3]
     learning_rate = args[4]
     is_overfitting = args[5]
     whichGPU = args[6]
-    main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU)
+    l1_weight = args[7]
+    main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight)
