@@ -110,6 +110,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
 
     featLayer = 'resnet/logits'
     feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
+    convOut = tf.squeeze(tf.get_default_graph().get_tensor_by_name("resnet/postnorm/Relu:0"))
     # feat = tf.squeeze(tf.nn.l2_normalize(tf.get_default_graph().get_tensor_by_name("pool5:0"),3))
     # varvar = tf.get_default_graph().get_tensor_by_name("resnet/block1/unit_1/bottleneck_v2/conv1/BatchNorm/moving_mean:0")
 
