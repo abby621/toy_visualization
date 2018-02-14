@@ -144,7 +144,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     # loss = tf.reduce_sum(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))/batch_size
     base_loss = tf.reduce_mean(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))
     l1_loss = tf.multiply(l1_weight, tf.reduce_sum(tf.abs(feat)))
-    l1_loss = l1_loss + tf.multiply(l1_weight, tf.reduce_sum(tf.abs(tf.reshape(convOut,[convOut.shape[0],convOut.shape[1]*convOut.shape[2],convOut.shape[3]]))))
+    l1_loss = l1_loss + tf.multiply(l1_weight, tf.reduce_sum(tf.reduce_mean(tf.reduce_sum(tf.abs(tf.reshape(convOut,[convOut.shape[0],convOut.shape[1]*convOut.shape[2],convOut.shape[3]])),axis=1),axis=1)))
     loss = base_loss + l1_loss
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
@@ -180,7 +180,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
         _, loss_val, bl, l1 = sess.run([train_op, loss, base_loss, l1_loss], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
-        out_str = 'Step %d: loss = %.6f (%.3f from loss, %.3f from l1) -- (%.3f sec)' % (step, loss_val, bl, l1, duration)
+        out_str = 'Step %d: loss = %.6f (%.6f from loss, %.6f from l1) -- (%.3f sec)' % (step, loss_val, bl, l1, duration)
         # print(out_str)
         if step % summary_iters == 0 or is_overfitting:
             print(out_str)
