@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 # python training.py margin output_size learning_rate is_overfitting l1_weight
-# python training.py .3 120 1000 .0001 False '2' .05
+# python training.py .3 120 1000 .0001 False '2' .00001
 """
 
 import tensorflow as tf
@@ -31,7 +31,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
 
     signal.signal(signal.SIGINT, handler)
 
-    ckpt_dir = './output/ckpts'
+    ckpt_dir = './output/ckpts/l1_loss/conv_and_feat'
     log_dir = './output/logs'
     train_filename = './train.txt'
     if 'abby' in socket.gethostname().lower():
