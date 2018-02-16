@@ -13,7 +13,7 @@ import random
 from skimage.transform import rescale
 
 test_file = './val.txt'
-pretrained_net = './output/ckpts/l1_loss/conv_and_feat/checkpoint-2018_02_15_1059_lr0pt0001_outputSz1000_margin0pt3_l1wgt1e-07-7999'
+pretrained_net = './output/ckpts/l1_loss/conv_and_feat/checkpoint-2018_02_15_1059_lr0pt0001_outputSz1000_margin0pt3_l1wgt1e-07-39999'
 img_size = [256, 256]
 crop_size = [227, 227]
 mean_file = '/project/focus/abby/triplepalooza/models/places365/places365CNN_mean.npy'
