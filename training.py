@@ -2,6 +2,8 @@
 """
 # python training.py margin output_size learning_rate is_overfitting l1_weight
 # python training.py .3 120 1000 .0001 False '2' .00001
+# if ilsvrc:
+# python training.py .3 120 1000 .0001 False '2' .00001
 """
 
 import tensorflow as tf
@@ -39,7 +41,8 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     else:
         mean_file = '/project/focus/abby/triplepalooza/models/traffickcam/tc_mean_im.npy'
     # pretrained_net = os.path.join(ckpt_dir,'checkpoint-2018_02_12_1052_lr0pt0001_outputSz1000_margin0pt3-3582')
-    pretrained_net = './output/ckpts/no_l1/checkpoint-2018_02_16_1417_lr0pt0001_outputSz1000_margin0pt3_l1wgt1e-05-69857'
+    # pretrained_net = './output/ckpts/no_l1/checkpoint-2018_02_16_1417_lr0pt0001_outputSz1000_margin0pt3_l1wgt1e-05-69857'
+    pretrained_net = '/project/focus/abby/triplepalooza/models/ilsvrc-2012/resnet_v2_50.ckpt'
     #pretrained_net = None
     img_size = [256, 256]
     crop_size = [224, 224]
@@ -106,7 +109,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
         final_batch = tf.add(tf.subtract(image_batch,repMeanIm),noise)
 
     print("Preparing network...")
-    with slim.arg_scope(resnet_v2.resnet_arg_scope(is_training=False, use_batch_norm=False, updates_collections=None, batch_norm_decay=.7, fused=True)):
+    with slim.arg_scope(resnet_v2.resnet_arg_scope(is_training=False, use_batch_norm=True, updates_collections=None, batch_norm_decay=.7, fused=True)):
         _, layers = resnet_v2.resnet_v2_50(final_batch, use_batch_norm=False,num_classes=output_size, is_training=False, scope='resnet')
 
     featLayer = 'resnet/logits'
