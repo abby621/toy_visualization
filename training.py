@@ -158,7 +158,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
         # train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
-        optimizer = tf.train.AdamOptimizer(learning_rate)
+        optimizer = tf.train.MomentumOptimizer(learning_rate,0.95)
         train_op = slim.learning.create_train_op(loss, optimizer)
 
     # Create a saver for writing training checkpoints.
