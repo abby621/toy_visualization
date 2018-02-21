@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-# python training.py margin output_size learning_rate is_overfitting l1_weight
-# python fine_tune.py .3 120 1000 .0001 False '2' .00001
+# python training.py margin output_size learning_rate is_overfitting l1_weight bn_decay
+# python fine_tune.py .3 120 1000 .0001 False '2' .00001 .9
 # if ilsvrc:
-# python fine_tune.py .3 120 1001 .0001 False '2' .00001
+# python fine_tune.py .3 120 1001 .0001 False '2' .00001 .9
 """
 
 import tensorflow as tf
@@ -23,7 +23,7 @@ import socket
 import signal
 import sys
 
-def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight):
+def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight, bn_decay):
     def handler(signum, frame):
         print 'Saving checkpoint before closing'
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
@@ -59,6 +59,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     output_size = int(output_size)
     learning_rate = float(learning_rate)
     l1_weight = float(l1_weight)
+    batch_norm_decay = float(bn_decay)
 
     if batch_size%30 != 0:
         print 'Batch size must be divisible by 30!'
@@ -73,7 +74,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     numClasses = len(train_data.files)
     numIms = np.sum([len(train_data.files[idx]) for idx in range(0,numClasses)])
     datestr = datetime.now().strftime("%Y_%m_%d_%H%M")
-    param_str = datestr+'_lr'+str(learning_rate).replace('.','pt')+'_outputSz'+str(output_size)+'_margin'+str(margin).replace('.','pt')+'_l1wgt'+str(l1_weight).replace('.','pt')
+    param_str = datestr+'_lr'+str(learning_rate).replace('.','pt')+'_outputSz'+str(output_size)+'_margin'+str(margin).replace('.','pt')+'_l1wgt'+str(l1_weight).replace('.','pt')+'_bndecay'+str(batch_norm_decay).replace('.','pt')
     logfile_path = os.path.join(log_dir,param_str+'_train.txt')
     train_log_file = open(logfile_path,'a')
     print '------------'
@@ -111,7 +112,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     print("Preparing network...")
     # with slim.arg_scope(resnet_v2.resnet_arg_scope(is_training=False, use_batch_norm=True, updates_collections=None, batch_norm_decay=.9, fused=True)):
     #     _, layers = resnet_v2.resnet_v2_50(final_batch, use_batch_norm=True,num_classes=output_size, is_training=False)
-    with slim.arg_scope(resnet_v2.resnet_arg_scope(updates_collections=None, batch_norm_decay=.9)):
+    with slim.arg_scope(resnet_v2.resnet_arg_scope(updates_collections=None, batch_norm_decay=batch_norm_decay)):
         _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True)
 
     # if we're fine-tuning, we need to make sure not to include the logits layer in the variables that we restore
@@ -228,7 +229,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
 if __name__ == "__main__":
     args = sys.argv
     if len(args) < 5:
-        print 'Expected four input parameters: margin, output_size, learning_rate, is_overfitting, whichGPU, l1_weight'
+        print 'Expected four input parameters: margin, output_size, learning_rate, is_overfitting, whichGPU, l1_weight, bn_decay'
     margin = args[1]
     batch_size = args[2]
     output_size = args[3]
@@ -236,4 +237,5 @@ if __name__ == "__main__":
     is_overfitting = args[5]
     whichGPU = args[6]
     l1_weight = args[7]
-    main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight)
+    bn_decay = args[8]
+    main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight,bn_decay)
