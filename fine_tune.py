@@ -118,7 +118,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     variables_to_restore = []
     for var in slim.get_model_variables():
         excluded = False
-        if var.op.name.startswith('resnet_v2_50/block4'):
+        if var.op.name.startswith('resnet_v2_50/logits'):
             excluded = True
             break
         if not excluded:
