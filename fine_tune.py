@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 # python training.py margin output_size learning_rate is_overfitting l1_weight
-# python training.py .3 120 1000 .0001 False '2' .00001
+# python fine_tune.py .3 120 1000 .0001 False '2' .00001
 # if ilsvrc:
-# python training.py .3 120 1001 .0001 False '2' .00001
+# python fine_tune.py .3 120 1001 .0001 False '2' .00001
 """
 
 import tensorflow as tf
@@ -36,6 +36,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     ckpt_dir = './output/ckpts/ilsvrc_no_l1'
     log_dir = './output/logs'
     train_filename = './train.txt'
+    test_filename = './val.txt'
     if 'abby' in socket.gethostname().lower():
         mean_file = '/Users/abby/Documents/repos/triplepalooza/models/traffickcam/tc_mean_im.npy'
     else:
@@ -67,6 +68,8 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
 
     # Create data "batcher"
     train_data = CombinatorialTripletSet(train_filename, mean_file, img_size, crop_size, batch_size, num_pos_examples, isTraining=True, isOverfitting=is_overfitting)
+    test_data = CombinatorialTripletSet(test_filename, mean_file, img_size, crop_size, batch_size, isTraining=False)
+
     numClasses = len(train_data.files)
     numIms = np.sum([len(train_data.files[idx]) for idx in range(0,numClasses)])
     datestr = datetime.now().strftime("%Y_%m_%d_%H%M")
@@ -115,12 +118,11 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     variables_to_restore = []
     for var in slim.get_model_variables():
         excluded = False
-        if var.op.name.startswith('resnet_v2_50/logits'):
+        if var.op.name.startswith('resnet_v2_50/block4'):
             excluded = True
             break
         if not excluded:
             variables_to_restore.append(var)
-
 
     featLayer = 'resnet_v2_50/logits'
     feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
