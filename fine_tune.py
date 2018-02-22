@@ -165,11 +165,18 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     l1_loss = tf.constant(0.0)
     loss = base_loss + l1_loss
 
+    global_step = tf.Variable(0, trainable=False, name='global_step')
+
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
-        # train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
-        optimizer = tf.train.MomentumOptimizer(learning_rate,0.95)
+        adaptive_learning_rate = tf.train.exponential_decay(
+              learning_rate,                # Base learning rate.
+              global_step * batch_size,  # Current index into the dataset.
+              num_iters/4,          # Decay step.
+              0.95,                # Decay rate.
+              staircase=True)
+        optimizer = tf.train.MomentumOptimizer(adaptive_learning_rate,0.9)
         train_op = slim.learning.create_train_op(loss, optimizer)
 
     # Create a saver for writing training checkpoints.
@@ -219,6 +226,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
             pretrained_net = os.path.join(ckpt_dir, 'final-'+param_str)
             saver.save(sess, pretrained_net, global_step=step)
             print 'final-',pretrained_net+'-'+str(step), ' saved!'
+        global_step += 1
 
     sess.close()
     train_log_file.close()
