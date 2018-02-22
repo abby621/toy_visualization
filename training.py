@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-# python training.py margin output_size learning_rate is_overfitting l1_weight
-# python training.py .3 120 1000 .0001 False '2' .00001
+# python training.py margin output_size learning_rate is_overfitting l1_weight bn_decay
+# python training.py .3 120 1000 .0001 False '2' .00001 .5
 # if ilsvrc:
-# python training.py .3 120 1001 .0001 False '2' .00001
+# python training.py .3 120 1001 .0001 False '2' .00001 .9
 """
 
 import tensorflow as tf
@@ -33,7 +33,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
 
     signal.signal(signal.SIGINT, handler)
 
-    ckpt_dir = './output/ckpts/ilsvrc_no_l1'
+    ckpt_dir = './output/ckpts/fromscratch_no_l1_every100'
     log_dir = './output/logs'
     train_filename = './train.txt'
     if 'abby' in socket.gethostname().lower():
@@ -47,7 +47,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     crop_size = [224, 224]
     num_iters = 200000
     summary_iters = 10
-    save_iters = 1000
+    save_iters = 100
 
     # is_training = True
     if is_overfitting.lower()=='true':
