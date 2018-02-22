@@ -23,7 +23,7 @@ import socket
 import signal
 import sys
 
-def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight):
+def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight,bn_decay):
     def handler(signum, frame):
         print 'Saving checkpoint before closing'
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
@@ -42,8 +42,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
         mean_file = '/project/focus/abby/triplepalooza/models/traffickcam/tc_mean_im.npy'
     # pretrained_net = os.path.join(ckpt_dir,'checkpoint-2018_02_12_1052_lr0pt0001_outputSz1000_margin0pt3-3582')
     # pretrained_net = './output/ckpts/no_l1/checkpoint-2018_02_16_1417_lr0pt0001_outputSz1000_margin0pt3_l1wgt1e-05-69857'
-    pretrained_net = '/project/focus/abby/triplepalooza/models/ilsvrc-2012/resnet_v2_50.ckpt'
-    #pretrained_net = None
+    pretrained_net = None
     img_size = [256, 256]
     crop_size = [224, 224]
     num_iters = 200000
@@ -61,6 +60,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     output_size = int(output_size)
     learning_rate = float(learning_rate)
     l1_weight = float(l1_weight)
+    batch_norm_decay = float(bn_decay)
 
     if batch_size%30 != 0:
         print 'Batch size must be divisible by 30!'
@@ -73,7 +73,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     numClasses = len(train_data.files)
     numIms = np.sum([len(train_data.files[idx]) for idx in range(0,numClasses)])
     datestr = datetime.now().strftime("%Y_%m_%d_%H%M")
-    param_str = datestr+'_lr'+str(learning_rate).replace('.','pt')+'_outputSz'+str(output_size)+'_margin'+str(margin).replace('.','pt')+'_l1wgt'+str(l1_weight).replace('.','pt')
+    param_str = datestr+'_lr'+str(learning_rate).replace('.','pt')+'_outputSz'+str(output_size)+'_margin'+str(margin).replace('.','pt')+'_l1wgt'+str(l1_weight).replace('.','pt')+'_bndecay'+str(batch_norm_decay).replace('.','pt')
     logfile_path = os.path.join(log_dir,param_str+'_train.txt')
     train_log_file = open(logfile_path,'a')
     print '------------'
@@ -109,9 +109,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
         final_batch = tf.add(tf.subtract(image_batch,repMeanIm),noise)
 
     print("Preparing network...")
-    # with slim.arg_scope(resnet_v2.resnet_arg_scope(is_training=False, use_batch_norm=True, updates_collections=None, batch_norm_decay=.9, fused=True)):
-    #     _, layers = resnet_v2.resnet_v2_50(final_batch, use_batch_norm=True,num_classes=output_size, is_training=False)
-    with slim.arg_scope(resnet_v2.resnet_arg_scope(updates_collections=None, batch_norm_decay=.9)):
+    with slim.arg_scope(resnet_v2.resnet_arg_scope(updates_collections=None, batch_norm_decay=batch_norm_decay)):
         _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True)
 
     featLayer = 'resnet_v2_50/logits'
@@ -218,7 +216,7 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
 if __name__ == "__main__":
     args = sys.argv
     if len(args) < 5:
-        print 'Expected four input parameters: margin, output_size, learning_rate, is_overfitting, whichGPU, l1_weight'
+        print 'Expected four input parameters: margin, output_size, learning_rate, is_overfitting, whichGPU, l1_weight, bn_decay'
     margin = args[1]
     batch_size = args[2]
     output_size = args[3]
@@ -226,4 +224,5 @@ if __name__ == "__main__":
     is_overfitting = args[5]
     whichGPU = args[6]
     l1_weight = args[7]
-    main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight)
+    bn_decay = args[8]
+    main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight,bn_decay)
