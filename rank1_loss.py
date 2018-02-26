@@ -130,7 +130,19 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     negFeats = tf.gather(feat, tf.add(idx,2))
     dPos = tf.abs(ancFeats - posFeats)
     dNeg = tf.abs(ancFeats - negFeats)
-    inversions = tf.count_nonzero(tf.round(tf.sigmoid(dPos - dNeg)),axis=1,dtype='float32')
+
+    # TODO: HOW DO WE CONVERT OUR SIGMOID TO A COUNT? ROUNDING IS NON-DIFFERENTIABLE
+    dist = tf.sigmoid(dPos - dNeg)
+    # round numbers less than 0.5 to zero;
+    # by making them negative and taking the maximum with 0
+    differentiable_round = tf.maximum(dist-0.499,0)
+    # scale the remaining numbers (0 to 0.5) to greater than 1
+    # the other half (zeros) is not affected by multiplication
+    differentiable_round = differentiable_round * 10000
+    # take the minimum with 1
+    differentiable_round = tf.minimum(differentiable_round, 1)
+
+    inversions = tf.reduce_sum(differentiable_round,axis=1)
     loss = tf.maximum(0., inversions - tf.cast(tf.constant(threshold*output_size),dtype='float32'))
     loss = tf.reduce_mean(loss)
 
