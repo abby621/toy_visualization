@@ -176,10 +176,10 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     for step in range(num_iters):
         start_time = time.time()
         batch, labels, ims = train_data.getBatch()
-        _, loss_val, bl, l1 = sess.run([train_op, loss, base_loss, l1_loss], feed_dict={image_batch: batch, label_batch: labels})
+        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
-        out_str = 'Step %d: loss = %.6f (%.6f from loss, %.6f from l1) -- (%.3f sec)' % (step, loss_val, bl, l1, duration)
+        out_str = 'Step %d: loss = %.6f -- (%.3f sec)' % (step, loss_val,duration)
         # print(out_str)
         if step % summary_iters == 0 or is_overfitting:
             print(out_str)
