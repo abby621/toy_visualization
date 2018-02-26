@@ -113,7 +113,7 @@ class CombinatorialTripletSet:
 
         return img
 
-class VanillaTripletSet:
+class VanillaTripletSet(CombinatorialTripletSet):
     def __init__(self, image_list, mean_file, image_size, crop_size, batchSize=100, isTraining=True, isOverfitting=False):
         self.image_size = image_size
         self.crop_size = crop_size
