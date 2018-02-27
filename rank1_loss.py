@@ -39,7 +39,9 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
         mean_file = '/Users/abby/Documents/repos/triplepalooza/models/traffickcam/tc_mean_im.npy'
     else:
         mean_file = '/project/focus/abby/triplepalooza/models/traffickcam/tc_mean_im.npy'
-    pretrained_net = '/project/focus/abby/triplepalooza/models/ilsvrc-2012/resnet_v2_50.ckpt'
+    # pretrained_net = '/project/focus/abby/triplepalooza/models/ilsvrc-2012/resnet_v2_50.ckpt'
+    pretrained_net = None
+    finetuning = False
     img_size = [256, 256]
     crop_size = [224, 224]
     num_iters = 200000
@@ -111,15 +113,6 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     with slim.arg_scope(resnet_v2.resnet_arg_scope(updates_collections=None, batch_norm_decay=batch_norm_decay)):
         _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True)
 
-    # if we're fine-tuning, we need to make sure not to include the logits layer in the variables that we restore
-    variables_to_restore = []
-    for var in slim.get_model_variables():
-        excluded = False
-        if var.op.name.startswith('resnet_v2_50/logits') or 'momentum' in var.op.name.lower():
-            excluded = True
-        if not excluded:
-            variables_to_restore.append(var)
-
     featLayer = 'resnet_v2_50/logits'
     feat = layers[featLayer]
 
@@ -167,8 +160,20 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
 
     writer = tf.summary.FileWriter(log_dir, sess.graph)
 
-    restore_fn = slim.assign_from_checkpoint_fn(pretrained_net,variables_to_restore)
-    restore_fn(sess)
+    if pretrained_net:
+        variables_to_restore = []
+        # if we're fine-tuning, we need to make sure not to include the logits layer in the variables that we restore
+        for var in slim.get_model_variables():
+            excluded = False
+            if 'momentum' in var.op.name.lower():
+                excluded = True
+            if finetuning and var.op.name.startswith(featLayer):
+                excluded = True
+            if not excluded:
+                variables_to_restore.append(var)
+
+        restore_fn = slim.assign_from_checkpoint_fn(pretrained_net,variables_to_restore)
+        restore_fn(sess)
 
     print("Start training...")
     ctr  = 0
