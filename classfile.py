@@ -157,16 +157,8 @@ class VanillaTripletSet(CombinatorialTripletSet):
         self.indexes = np.arange(0, len(self.files))
 
     def getBatch(self):
-        numClasses = self.batchSize/3
-        classes = []
-        selectedClasses = 0
-        while selectedClasses < numClasses:
-            cls = np.random.choice(self.classes)
-            while cls in classes:
-                cls = np.random.choice(self.classes)
-            classes.append(cls)
-            files = self.files[cls]
-            selectedClasses += 1
+        numClasses = self.batchSize/self.numPos # need to handle the case where we need more classes than we have?
+        classes = np.random.choice(self.classes,numClasses,replace=False)
 
         batch = np.zeros([self.batchSize, self.crop_size[0], self.crop_size[1], 3])
         labels = np.zeros([self.batchSize],dtype='int')
