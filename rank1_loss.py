@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-# python rank1_loss.py threshold output_size learning_rate is_overfitting bn_decay
-# python rank1_loss.py .7 120 1000 .0001 False '2' .00001 .9
+# python rank1_loss.py threshold batch_size output_size learning_rate is_overfitting whichGPU bn_decay
+# python rank1_loss.py .7 120 1000 .00000001 False '2' .9
 """
 
 import tensorflow as tf
@@ -209,7 +209,7 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
 if __name__ == "__main__":
     args = sys.argv
     if len(args) < 5:
-        print 'Expected four input parameters: threshold, output_size, learning_rate, is_overfitting, whichGPU, bn_decay'
+        print 'Expected input parameters: threshold, batch_size, output_size, learning_rate, is_overfitting, whichGPU, bn_decay'
     threshold = args[1]
     batch_size = args[2]
     output_size = args[3]
