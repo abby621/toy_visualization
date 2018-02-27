@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 # python rank1_loss.py threshold batch_size output_size learning_rate is_overfitting whichGPU bn_decay
-# python rank1_loss.py .7 120 256 .00000001 False '2' .9
+# python rank1_loss.py .5 120 256 .000001 False '1' .9
 """
 
 import tensorflow as tf
@@ -21,7 +21,7 @@ import socket
 import signal
 import sys
 
-def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU, bn_decay):
+def main(threshold,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     def handler(signum, frame):
         print 'Saving checkpoint before closing'
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
@@ -48,12 +48,6 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     summary_iters = 10
     save_iters = 100
 
-    # is_training = True
-    if is_overfitting.lower()=='true':
-        is_overfitting = True
-    else:
-        is_overfitting = False
-
     threshold = float(threshold)
     batch_size = int(batch_size)
     output_size = int(output_size)
@@ -67,7 +61,7 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     num_pos_examples = batch_size/30
 
     # Create data "batcher"
-    train_data = VanillaTripletSet(train_filename, mean_file, img_size, crop_size, batch_size, isTraining=True, isOverfitting=is_overfitting)
+    train_data = VanillaTripletSet(train_filename, mean_file, img_size, crop_size, batch_size, isTraining=True)
 
     numClasses = len(train_data.files)
     numIms = np.sum([len(train_data.files[idx]) for idx in range(0,numClasses)])
@@ -134,16 +128,16 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     # so if have 100dim features and allow 70% inversions, we would only incur a loss
     # for the # of inversions exceeding 70
     # so if we only have 69 inversions, we would incur 0 loss
-    inversions_thresholded = inversions - tf.cast(tf.constant(threshold*output_size),dtype='float32')
-    loss1 = tf.maximum(0., inversions_thresholded)
-    loss2 = tf.reduce_mean(loss1)
+    inversions_thresholded = inversions - (threshold*output_size)
+    loss = tf.maximum(0., inversions_thresholded)
+    loss = tf.reduce_mean(loss)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
         optimizer = tf.train.AdamOptimizer(learning_rate)
         # optimizer = tf.train.MomentumOptimizer(learning_rate,0.95)
-        train_op = slim.learning.create_train_op(loss2, optimizer)
+        train_op = slim.learning.create_train_op(loss, optimizer)
 
     # Create a saver for writing training checkpoints.
     saver = tf.train.Saver(max_to_keep=500)
@@ -165,8 +159,10 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
         # if we're fine-tuning, we need to make sure not to include the logits layer in the variables that we restore
         for var in slim.get_model_variables():
             excluded = False
+            # exclude all momentum terms since we're using adam optimizer
             if 'momentum' in var.op.name.lower():
                 excluded = True
+            # if we're fine tuning, exclude the feature vector that we want to fine tune
             if finetuning and var.op.name.startswith(featLayer):
                 excluded = True
             if not excluded:
@@ -180,7 +176,7 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     for step in range(num_iters):
         start_time = time.time()
         batch, labels, ims = train_data.getBatch()
-        _, loss_val = sess.run([train_op, loss2], feed_dict={image_batch: batch, label_batch: labels})
+        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.6f -- (%.3f sec)' % (step, loss_val,duration)
@@ -214,12 +210,11 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
 if __name__ == "__main__":
     args = sys.argv
     if len(args) < 5:
-        print 'Expected input parameters: threshold, batch_size, output_size, learning_rate, is_overfitting, whichGPU, bn_decay'
+        print 'Expected input parameters: threshold, batch_size, output_size, learning_rate, whichGPU, bn_decay'
     threshold = args[1]
     batch_size = args[2]
     output_size = args[3]
     learning_rate = args[4]
-    is_overfitting = args[5]
-    whichGPU = args[6]
-    bn_decay = args[7]
-    main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,bn_decay)
+    whichGPU = args[5]
+    bn_decay = args[6]
+    main(threshold,batch_size,output_size,learning_rate,whichGPU,bn_decay)
