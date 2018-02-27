@@ -121,7 +121,7 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
             variables_to_restore.append(var)
 
     featLayer = 'resnet_v2_50/logits'
-    feat = tf.squeeze(tf.nn.l2_normalize(layers[featLayer],3))
+    feat = layers[featLayer]
 
     idx = tf.range(0, batch_size, 3)
     ancFeats = tf.gather(feat, idx)
