@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 # python rank1_loss.py threshold batch_size output_size learning_rate is_overfitting whichGPU bn_decay
-# python rank1_loss.py .7 120 1000 .00000001 False '2' .9
+# python rank1_loss.py .7 120 256 .00000001 False '2' .9
 """
 
 import tensorflow as tf
@@ -175,7 +175,7 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     for step in range(num_iters):
         start_time = time.time()
         batch, labels, ims = train_data.getBatch()
-        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels})
+        _, loss_val = sess.run([train_op, loss2], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.6f -- (%.3f sec)' % (step, loss_val,duration)
