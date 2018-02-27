@@ -133,7 +133,7 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     # Count our inversions:
     # get something that is 1 if negative is closer
     # and 0 if positive is closer
-    dist = tf.squeeze(tf.sigmoid(dNeg - dPos))
+    dist = tf.squeeze(tf.sigmoid(dPos-dNeg))
     # round numbers less than 0.5 to zero;
     # by making them negative and taking the maximum with 0
     differentiable_round = tf.maximum(dist-0.499,0)
