@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-# python rank1_loss.py threshold output_size learning_rate is_overfitting l1_weight bn_decay
+# python rank1_loss.py threshold output_size learning_rate is_overfitting bn_decay
 # python rank1_loss.py .7 120 1000 .0001 False '2' .00001 .9
 """
 
@@ -21,7 +21,7 @@ import socket
 import signal
 import sys
 
-def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight, bn_decay):
+def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU, bn_decay):
     def handler(signum, frame):
         print 'Saving checkpoint before closing'
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
@@ -56,7 +56,6 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     batch_size = int(batch_size)
     output_size = int(output_size)
     learning_rate = float(learning_rate)
-    l1_weight = float(l1_weight)
     batch_norm_decay = float(bn_decay)
 
     if batch_size%30 != 0:
@@ -71,7 +70,7 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     numClasses = len(train_data.files)
     numIms = np.sum([len(train_data.files[idx]) for idx in range(0,numClasses)])
     datestr = datetime.now().strftime("%Y_%m_%d_%H%M")
-    param_str = datestr+'_lr'+str(learning_rate).replace('.','pt')+'_outputSz'+str(output_size)+'_threshold'+str(threshold).replace('.','pt')+'_l1wgt'+str(l1_weight).replace('.','pt')+'_bndecay'+str(batch_norm_decay).replace('.','pt')
+    param_str = datestr+'_lr'+str(learning_rate).replace('.','pt')+'_outputSz'+str(output_size)+'_threshold'+str(threshold).replace('.','pt')+'_rank1threshold'+str(threshold).replace('.','pt')+'_bndecay'+str(batch_norm_decay).replace('.','pt')
     logfile_path = os.path.join(log_dir,param_str+'_train.txt')
     train_log_file = open(logfile_path,'a')
     print '------------'
@@ -180,9 +179,9 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
         end_time = time.time()
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.6f -- (%.3f sec)' % (step, loss_val,duration)
-        # print(out_str)
+        print(out_str)
         if step % summary_iters == 0 or is_overfitting:
-            print(out_str)
+            # print(out_str)
             train_log_file.write(out_str+'\n')
         # Update the events file.
         # summary_str = sess.run(summary_op)
@@ -210,13 +209,12 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
 if __name__ == "__main__":
     args = sys.argv
     if len(args) < 5:
-        print 'Expected four input parameters: threshold, output_size, learning_rate, is_overfitting, whichGPU, l1_weight, bn_decay'
+        print 'Expected four input parameters: threshold, output_size, learning_rate, is_overfitting, whichGPU, bn_decay'
     threshold = args[1]
     batch_size = args[2]
     output_size = args[3]
     learning_rate = args[4]
     is_overfitting = args[5]
     whichGPU = args[6]
-    l1_weight = args[7]
-    bn_decay = args[8]
-    main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight,bn_decay)
+    bn_decay = args[7]
+    main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,bn_decay)
