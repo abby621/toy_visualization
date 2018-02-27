@@ -130,8 +130,10 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     dPos = tf.abs(ancFeats - posFeats)
     dNeg = tf.abs(ancFeats - negFeats)
 
-    # TODO: HOW DO WE CONVERT OUR SIGMOID TO A COUNT? ROUNDING IS NON-DIFFERENTIABLE
-    dist = tf.sigmoid(dPos - dNeg)
+    # Count our inversions:
+    # get something that is 1 if negative is closer
+    # and 0 if positive is closer
+    dist = tf.squeeze(tf.sigmoid(dNeg - dPos))
     # round numbers less than 0.5 to zero;
     # by making them negative and taking the maximum with 0
     differentiable_round = tf.maximum(dist-0.499,0)
@@ -140,9 +142,14 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     differentiable_round = differentiable_round * 10000
     # take the minimum with 1
     differentiable_round = tf.minimum(differentiable_round, 1)
+    inversions = tf.squeeze(tf.reduce_sum(differentiable_round,axis=1))
 
-    inversions = tf.reduce_sum(differentiable_round,axis=1)
-    loss = tf.maximum(0., inversions - tf.cast(tf.constant(threshold*output_size),dtype='float32'))
+    # allow some # of inversions (threshold * output_size)
+    # so if have 100dim features and allow 30% inversions, we would only incur a loss
+    # for the # of inversions exceeding 30
+    # so if we only have 20 inversions, we would incur 0 loss
+    inversions_thresholded = inversions - tf.cast(tf.constant(threshold*output_size),dtype='float32')
+    loss = tf.maximum(0., inversions_thresholded)
     loss = tf.reduce_mean(loss)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
