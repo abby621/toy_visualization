@@ -133,31 +133,24 @@ def main(threshold,batch_size,output_size,learning_rate,is_overfitting,whichGPU,
     # Count our inversions:
     # get something that is 1 if negative is closer
     # and 0 if positive is closer
-    dist = tf.squeeze(tf.sigmoid(dPos-dNeg))
-    # round numbers less than 0.5 to zero;
-    # by making them negative and taking the maximum with 0
-    differentiable_round = tf.maximum(dist-0.499,0)
-    # scale the remaining numbers (0 to 0.5) to greater than 1
-    # the other half (zeros) is not affected by multiplication
-    differentiable_round = differentiable_round * 10000
-    # take the minimum with 1
-    differentiable_round = tf.minimum(differentiable_round, 1)
-    inversions = tf.squeeze(tf.reduce_sum(differentiable_round,axis=1))
+    dist = tf.squeeze(dPos - dNeg)
+    sigDist = 1. / (1. + tf.exp(-2. * 5. * dist))
+    inversions = tf.reduce_sum(sigDist,axis=1)
 
     # allow some # of inversions (threshold * output_size)
-    # so if have 100dim features and allow 30% inversions, we would only incur a loss
-    # for the # of inversions exceeding 30
-    # so if we only have 20 inversions, we would incur 0 loss
+    # so if have 100dim features and allow 70% inversions, we would only incur a loss
+    # for the # of inversions exceeding 70
+    # so if we only have 69 inversions, we would incur 0 loss
     inversions_thresholded = inversions - tf.cast(tf.constant(threshold*output_size),dtype='float32')
-    loss = tf.maximum(0., inversions_thresholded)
-    loss = tf.reduce_mean(loss)
+    loss1 = tf.maximum(0., inversions_thresholded)
+    loss2 = tf.reduce_mean(loss1)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
         optimizer = tf.train.AdamOptimizer(learning_rate)
         # optimizer = tf.train.MomentumOptimizer(learning_rate,0.95)
-        train_op = slim.learning.create_train_op(loss, optimizer)
+        train_op = slim.learning.create_train_op(loss2, optimizer)
 
     # Create a saver for writing training checkpoints.
     saver = tf.train.Saver(max_to_keep=500)
