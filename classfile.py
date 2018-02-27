@@ -159,28 +159,17 @@ class VanillaTripletSet(CombinatorialTripletSet):
     def getBatch(self):
         numClasses = self.batchSize/3
         classes = np.zeros(numClasses,dtype=np.int)
-        badClasses = []
         selectedClasses = 0
         while selectedClasses < numClasses:
             cls = np.random.choice(self.classes)
-            while cls in classes or cls in badClasses:
+            while cls in classes:
                 cls = np.random.choice(self.classes)
-
             files = self.files[cls]
-            num_traffickcam = np.sum([1 for fl in files if 'resized_traffickcam' in fl])
-            num_expedia = np.sum([1 for fl in files if 'resized_expedia' in fl])
-
-            if num_traffickcam > 3 and num_expedia > 3:
-                classes[selectedClasses] = cls
-            else:
-                badClasses.append(cls)
-
             selectedClasses += 1
 
         batch = np.zeros([self.batchSize, self.crop_size[0], self.crop_size[1], 3])
         labels = np.zeros([self.batchSize],dtype='int')
         ims = []
-        dont_use_flag = np.zeros([self.batchSize],dtype='bool')
 
         ctr = 0
         for posClass in classes:
@@ -193,7 +182,6 @@ class VanillaTripletSet(CombinatorialTripletSet):
                 anchorImg = self.getProcessedImage(anchorIm)
 
             posIm = np.random.choice(self.files[posClass][1:])
-
             posImg = self.getProcessedImage(posIm)
             while posImg is None:
                 posIm = np.random.choice(self.files[posClass][1:])
