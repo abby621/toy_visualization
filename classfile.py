@@ -158,12 +158,13 @@ class VanillaTripletSet(CombinatorialTripletSet):
 
     def getBatch(self):
         numClasses = self.batchSize/3
-        classes = np.zeros(numClasses,dtype=np.int)
+        classes = []
         selectedClasses = 0
         while selectedClasses < numClasses:
             cls = np.random.choice(self.classes)
             while cls in classes:
                 cls = np.random.choice(self.classes)
+            classes.append(cls)
             files = self.files[cls]
             selectedClasses += 1
 
