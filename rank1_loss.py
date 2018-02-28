@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-# python rank1_loss.py threshold batch_size output_size learning_rate whichGPU bn_decay
-# python rank1_loss.py .5 120 256 .000001 False '1' .9
+# python rank1_loss.py batch_size output_size learning_rate whichGPU bn_decay
+# python rank1_loss.py 120 256 .000001 False '1' .9
 """
 
 import tensorflow as tf
@@ -21,7 +21,7 @@ import socket
 import signal
 import sys
 
-def main(threshold,batch_size,output_size,learning_rate,whichGPU, bn_decay):
+def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     def handler(signum, frame):
         print 'Saving checkpoint before closing'
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
@@ -48,7 +48,6 @@ def main(threshold,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     summary_iters = 10
     save_iters = 100
 
-    threshold = float(threshold)
     batch_size = int(batch_size)
     output_size = int(output_size)
     learning_rate = float(learning_rate)
@@ -66,7 +65,7 @@ def main(threshold,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     numClasses = len(train_data.files)
     numIms = np.sum([len(train_data.files[idx]) for idx in range(0,numClasses)])
     datestr = datetime.now().strftime("%Y_%m_%d_%H%M")
-    param_str = datestr+'_lr'+str(learning_rate).replace('.','pt')+'_outputSz'+str(output_size)+'_threshold'+str(threshold).replace('.','pt')+'_rank1threshold'+str(threshold).replace('.','pt')+'_bndecay'+str(batch_norm_decay).replace('.','pt')
+    param_str = datestr+'_lr'+str(learning_rate).replace('.','pt')+'_outputSz'+str(output_size)+'_bndecay'+str(batch_norm_decay).replace('.','pt')
     logfile_path = os.path.join(log_dir,param_str+'_train.txt')
     train_log_file = open(logfile_path,'a')
     print '------------'
@@ -76,8 +75,6 @@ def main(threshold,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     train_log_file.write('# Classes: '+str(numClasses)+'\n')
     print '# Ims: ',numIms
     train_log_file.write('# Ims: '+str(numIms)+'\n')
-    print 'threshold: ',threshold
-    train_log_file.write('threshold: '+str(threshold)+'\n')
     print 'Output size: ', output_size
     train_log_file.write('Output size: '+str(output_size)+'\n')
     print 'Learning rate: ',learning_rate
@@ -121,14 +118,6 @@ def main(threshold,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     dist = tf.squeeze(dPos - dNeg)
     dists = max(0, dist)
     loss = tf.norm(dists, ord=.001)
-
-    # allow some # of inversions (threshold * output_size)
-    # so if have 100dim features and allow 70% inversions, we would only incur a loss
-    # for the # of inversions exceeding 70
-    # so if we only have 69 inversions, we would incur 0 loss
-    inversions_thresholded = inversions - (threshold*output_size)
-    loss = tf.maximum(0., inversions_thresholded)
-    loss = tf.reduce_mean(loss)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -208,11 +197,10 @@ def main(threshold,batch_size,output_size,learning_rate,whichGPU, bn_decay):
 if __name__ == "__main__":
     args = sys.argv
     if len(args) < 5:
-        print 'Expected input parameters: threshold, batch_size, output_size, learning_rate, whichGPU, bn_decay'
-    threshold = args[1]
-    batch_size = args[2]
-    output_size = args[3]
-    learning_rate = args[4]
-    whichGPU = args[5]
-    bn_decay = args[6]
-    main(threshold,batch_size,output_size,learning_rate,whichGPU,bn_decay)
+        print 'Expected input parameters:batch_size, output_size, learning_rate, whichGPU, bn_decay'
+    batch_size = args[1]
+    output_size = args[2]
+    learning_rate = args[3]
+    whichGPU = args[4]
+    bn_decay = args[5]
+    main(batch_size,output_size,learning_rate,whichGPU,bn_decay)
