@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 # python rank1_loss.py batch_size output_size learning_rate whichGPU bn_decay
-# python rank1_loss.py 120 256 .000001 False '1' .9
+# python rank1_loss.py 120 256 .000001 '1' .9
 """
 
 import tensorflow as tf
@@ -117,7 +117,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     # and 0 if positive is closer
     dist = tf.squeeze(dPos - dNeg)
     dists = tf.maximum(0., dist)
-    loss = tf.norm(dists, ord=.001)
+    loss = tf.norm(dists, ord=1)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
