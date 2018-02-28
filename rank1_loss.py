@@ -39,9 +39,9 @@ def main(threshold,batch_size,output_size,learning_rate,whichGPU, bn_decay):
         mean_file = '/Users/abby/Documents/repos/triplepalooza/models/traffickcam/tc_mean_im.npy'
     else:
         mean_file = '/project/focus/abby/triplepalooza/models/traffickcam/tc_mean_im.npy'
-    # pretrained_net = '/project/focus/abby/triplepalooza/models/ilsvrc-2012/resnet_v2_50.ckpt'
-    pretrained_net = None
-    finetuning = False
+    pretrained_net = '/project/focus/abby/triplepalooza/models/ilsvrc-2012/resnet_v2_50.ckpt'
+    # pretrained_net = None
+    finetuning = True
     img_size = [256, 256]
     crop_size = [224, 224]
     num_iters = 200000
@@ -119,8 +119,8 @@ def main(threshold,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     # get something that is 1 if negative is closer
     # and 0 if positive is closer
     dist = tf.squeeze(dPos - dNeg)
-    sigDist = 1. / (1. + tf.exp(-2. * 5. * dist))
-    inversions = tf.reduce_sum(sigDist,axis=1)
+    dists = max(0, dist)
+    loss = tf.norm(dists, ord=.001)
 
     # allow some # of inversions (threshold * output_size)
     # so if have 100dim features and allow 70% inversions, we would only incur a loss
