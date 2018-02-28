@@ -116,7 +116,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     # get something that is 1 if negative is closer
     # and 0 if positive is closer
     dist = tf.squeeze(dPos - dNeg)
-    dists = tf.max(0, dist)
+    dists = tf.maximum(0., dist)
     loss = tf.norm(dists, ord=.001)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
