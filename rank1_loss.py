@@ -126,7 +126,6 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     posDists = tf.reshape(tf.gather_nd(D,posPairInds),(batch_size,ims_per_class,output_size))
 
     min_posDist = tf.reduce_min(posDists,axis=1)
-    min_posDist2 = tf.tile(tf.expand_dims(min_posDist,axis=1),(1,batch_size,1))
 
     # allDists = tf.abs(tf.expand_dims(D,2),(1,1,ims_per_class,1)))
 
@@ -141,9 +140,10 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     masked_allDists = mask + D # make all of our +s super high so they don't get selected as our min features
 
     min_negDist = tf.reduce_min(masked_allDists,axis=1)
-    min_negDist2 = tf.tile(tf.expand_dims(min_negDist,axis=0),(batch_size,1,1))
 
-    loss = tf.reduce_mean(tf.reduce_sum(tf.maximum(min_posDist2 - min_negDist2, 0.),axis=2))
+    max_score = tf.reduce_sum(tf.maximum(min_posDist - min_negDist, 0.),axis=1)
+
+    loss = tf.reduce_mean(max_score)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
