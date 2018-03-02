@@ -5,7 +5,7 @@
 """
 
 import tensorflow as tf
-from classfile import VanillaTripletSet
+from classfile import CombinatorialTripletSet
 import os.path
 import time
 from datetime import datetime
@@ -60,7 +60,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     ims_per_class = batch_size/30
 
     # Create data "batcher"
-    train_data = VanillaTripletSet(train_filename, mean_file, img_size, crop_size, batch_size, isTraining=True)
+    train_data = CombinatorialTripletSet(train_filename, mean_file, img_size, crop_size, batch_size, num_pos=ims_per_class,isTraining=True)
 
     numClasses = len(train_data.files)
     numIms = np.sum([len(train_data.files[idx]) for idx in range(0,numClasses)])
