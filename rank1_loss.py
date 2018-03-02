@@ -143,9 +143,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     min_negDist = tf.reduce_min(masked_allDists,axis=1)
     min_negDist2 = tf.tile(tf.expand_dims(min_negDist,axis=0),(batch_size,1,1))
 
-    max_score = tf.reduce_mean(tf.reduce_sum(tf.maximum(min_posDist2 - min_negDist2, 0.),axis=2))
-
-    loss = tf.reduce_mean(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))
+    loss = tf.reduce_mean(tf.reduce_sum(tf.maximum(min_posDist2 - min_negDist2, 0.),axis=2))
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
