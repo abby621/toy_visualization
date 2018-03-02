@@ -103,21 +103,49 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
         _, layers = resnet_v2.resnet_v2_50(final_batch, num_classes=output_size, is_training=True)
 
     featLayer = 'resnet_v2_50/logits'
-    feat = layers[featLayer]
+    feat = tf.squeeze(layers[featLayer])
+    expanded_a = tf.expand_dims(feat, 1)
+    expanded_b = tf.expand_dims(feat, 0)
+    D = tf.abs(expanded_a-expanded_b)
 
-    idx = tf.range(0, batch_size, 3)
-    ancFeats = tf.gather(feat, idx)
-    posFeats = tf.gather(feat, tf.add(idx,1))
-    negFeats = tf.gather(feat, tf.add(idx,2))
-    dPos = tf.abs(ancFeats - posFeats)
-    dNeg = tf.abs(ancFeats - negFeats)
+    # instead of our diagonal being 0, make it super high so we can take the min positive feature and not get a 0
+    diag_mask = np.zeros((batch_size,batch_size))
+    np.fill_diagonal(diag_mask,10000.)
+    diag_mask = np.repeat(diag_mask[:,:,np.newaxis],output_size,axis=2)
+    D = D + diag_mask
 
-    # Count our inversions:
-    # get something that is 1 if negative is closer
-    # and 0 if positive is closer
-    dist = tf.squeeze(dPos - dNeg)
-    dists = tf.maximum(0., dist)
-    loss = tf.norm(dists, ord=1)
+    posIdx = np.floor(np.arange(0,batch_size)/ims_per_class).astype('int')
+    posIdx10 = ims_per_class*posIdx
+    posImInds = np.tile(posIdx10,(ims_per_class,1)).transpose()+np.tile(np.arange(0,ims_per_class),(batch_size,1))
+    anchorInds = np.tile(np.arange(0,batch_size),(ims_per_class,1)).transpose()
+
+    posImInds_flat = posImInds.ravel()
+    anchorInds_flat = anchorInds.ravel()
+
+    posPairInds = zip(posImInds_flat,anchorInds_flat)
+    posDists = tf.reshape(tf.gather_nd(D,posPairInds),(batch_size,ims_per_class,output_size))
+
+    min_posDist = tf.reduce_min(posDists,axis=1)
+    min_posDist2 = tf.tile(tf.expand_dims(min_posDist,axis=1),(1,batch_size,1))
+
+    # allDists = tf.abs(tf.expand_dims(D,2),(1,1,ims_per_class,1)))
+
+    ra, rb = np.meshgrid(np.arange(0,batch_size),np.arange(0,batch_size))
+
+    bad_negatives = np.floor((ra)/ims_per_class) == np.floor((rb)/ims_per_class)
+    # bad_positives = np.mod(rb,ims_per_class) == np.mod(rc,ims_per_class)
+
+    mask = (1-bad_negatives).astype('float32')
+    mask[mask==0] = 10000
+    mask = np.repeat(mask[:,:,np.newaxis],output_size,axis=2)
+    masked_allDists = mask + D # make all of our +s super high so they don't get selected as our min features
+
+    min_negDist = tf.reduce_min(masked_allDists,axis=1)
+    min_negDist2 = tf.tile(tf.expand_dims(min_negDist,axis=0),(batch_size,1,1))
+
+    max_score = tf.reduce_mean(tf.reduce_sum(tf.maximum(min_posDist2 - min_negDist2, 0.),axis=2))
+
+    loss = tf.reduce_mean(tf.maximum(0.,tf.multiply(mask,margin + posDistsRep - allDists)))
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
