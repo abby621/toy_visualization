@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 # python rank1_loss.py batch_size output_size learning_rate whichGPU bn_decay
-# python rank1_loss.py 120 256 .000001 '1' .9
+# python rank1_loss.py 120 256 .0001 '1' .9
 """
 
 import tensorflow as tf
@@ -57,7 +57,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
         print 'Batch size must be divisible by 30!'
         sys.exit(0)
 
-    num_pos_examples = batch_size/30
+    ims_per_class = batch_size/30
 
     # Create data "batcher"
     train_data = VanillaTripletSet(train_filename, mean_file, img_size, crop_size, batch_size, isTraining=True)
