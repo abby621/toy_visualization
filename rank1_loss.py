@@ -104,46 +104,50 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
 
     featLayer = 'resnet_v2_50/logits'
     feat = tf.squeeze(layers[featLayer])
+
+    # get pairwise feature component distance (batch_size x batch_size x output_size)
     expanded_a = tf.expand_dims(feat, 1)
     expanded_b = tf.expand_dims(feat, 0)
     D = tf.abs(expanded_a-expanded_b)
 
-    # instead of our diagonal being 0, make it super high so we can take the min positive feature and not get a 0
+    # Mask the diagonals on the pairwise distance. The diagonal is all 0s
+    # but instead, we want to make our diagonals high so that we can easily
+    # find the minimum positive feature and not get a 0
     diag_mask = np.zeros((batch_size,batch_size))
     np.fill_diagonal(diag_mask,10000.)
     diag_mask = np.repeat(diag_mask[:,:,np.newaxis],output_size,axis=2)
     D = D + diag_mask
 
+    # get the indices of anchor-positive pairs, and grab those from the distance matrix
     posIdx = np.floor(np.arange(0,batch_size)/ims_per_class).astype('int')
     posIdx10 = ims_per_class*posIdx
     posImInds = np.tile(posIdx10,(ims_per_class,1)).transpose()+np.tile(np.arange(0,ims_per_class),(batch_size,1))
     anchorInds = np.tile(np.arange(0,batch_size),(ims_per_class,1)).transpose()
-
     posImInds_flat = posImInds.ravel()
     anchorInds_flat = anchorInds.ravel()
-
     posPairInds = zip(posImInds_flat,anchorInds_flat)
     posDists = tf.reshape(tf.gather_nd(D,posPairInds),(batch_size,ims_per_class,output_size))
 
+    # for every anchor feature component, find the closest positive feature components
     min_posDist = tf.reduce_min(posDists,axis=1)
 
-    # allDists = tf.abs(tf.expand_dims(D,2),(1,1,ims_per_class,1)))
-
+    # for every anchor feature component, find the closest negative feature components
+    # to do this, make all the positive pairs in the pairwise feature vector high
+    # so that we will only consider the negative pairs when we find the minimum negative components
     ra, rb = np.meshgrid(np.arange(0,batch_size),np.arange(0,batch_size))
-
-    bad_negatives = np.floor((ra)/ims_per_class) == np.floor((rb)/ims_per_class)
-    # bad_positives = np.mod(rb,ims_per_class) == np.mod(rc,ims_per_class)
-
-    mask = (1-bad_negatives).astype('float32')
-    mask[mask==0] = 10000
+    positive_pair_inds = np.floor((ra)/ims_per_class) == np.floor((rb)/ims_per_class)
+    mask = (1-positive_pair_inds).astype('float32')
+    mask[mask==0.] = 10000.
     mask = np.repeat(mask[:,:,np.newaxis],output_size,axis=2)
-    masked_allDists = mask + D # make all of our +s super high so they don't get selected as our min features
+    only_negDists = D + mask
+    min_negDist = tf.reduce_min(only_negDists,axis=1)
 
-    min_negDist = tf.reduce_min(masked_allDists,axis=1)
+    # Sum up the distances where the feature components are inverted:
+    # min(positive dists) > min(negative dists)
+    inversions = tf.reduce_sum(tf.maximum(min_posDist - min_negDist, 0.),axis=1)
 
-    max_score = tf.reduce_sum(tf.maximum(min_posDist - min_negDist, 0.),axis=1)
-
-    loss = tf.reduce_mean(max_score)
+    # Loss is the mean of the inversions over the whole batch
+    loss = tf.reduce_mean(inversions)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
