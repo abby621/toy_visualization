@@ -142,13 +142,12 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     mask[mask==0.] = 10000.
     mask = np.repeat(mask[:,:,np.newaxis],output_size,axis=2)
     only_negDists = D + mask
-    # min_negDist = tf.reduce_min(only_negDists,axis=1)
-    mean_negDist = tf.reduce_mean(only_negDists,axis=1)
+    min_negDist = tf.reduce_min(only_negDists,axis=1)
 
     # Sum up the distances where the feature components are inverted:
     # min(positive dists) > min(negative dists)
     # inversions = tf.reduce_sum(tf.maximum(min_posDist - min_negDist, 0.),axis=1)
-    inversions = tf.reduce_sum(tf.maximum(mean_posDist - mean_negDist, 0.),axis=1)
+    inversions = tf.reduce_sum(tf.maximum(mean_posDist - min_negDist, 0.),axis=1)
 
     # Loss is the mean of the inversions over the whole batch
     loss = tf.reduce_mean(inversions)
