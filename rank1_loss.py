@@ -146,7 +146,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     ra, rb = np.meshgrid(np.arange(0,batch_size),np.arange(0,batch_size))
     positive_pair_inds = np.floor((ra)/ims_per_class) == np.floor((rb)/ims_per_class)
     mask = (1-positive_pair_inds).astype('float32')
-    mask[mask==0.] = meanD
+    mask[mask==0.] = 10000.
     mask = np.repeat(mask[:,:,np.newaxis],output_size,axis=2)
     only_galleryDists = D + mask
     min_galleryDist = tf.reduce_min(only_galleryDists,axis=1)
