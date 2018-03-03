@@ -129,7 +129,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     posDists = tf.reshape(tf.gather_nd(D,posPairInds),(batch_size,ims_per_class,output_size))
 
     # for every anchor feature component, find the closest positive feature components
-    min_posDist = tf.reduce_min(posDists,axis=1)
+    min_posDist = tf.reduce_min(tf.abs(posDists),axis=1)
 
     # for every anchor feature component, find the closest negative feature components
     # to do this, make all the positive pairs in the pairwise feature vector high
@@ -140,7 +140,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     mask[mask==0.] = 10000.
     mask = np.repeat(mask[:,:,np.newaxis],output_size,axis=2)
     only_negDists = D + mask
-    min_negDist = tf.reduce_min(only_negDists,axis=1)
+    min_negDist = tf.reduce_min(tf.abs(only_negDists),axis=1)
 
     # Sum up the distances where the feature components are inverted:
     # min(positive dists) > min(negative dists)
