@@ -104,21 +104,24 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
 
     featLayer = 'resnet_v2_50/logits'
     feat = tf.squeeze(layers[featLayer])
-
-    # get pairwise feature component distance (batch_size x batch_size x output_size)
     expanded_a = tf.expand_dims(feat, 1)
     expanded_b = tf.expand_dims(feat, 0)
     D = tf.abs(expanded_a-expanded_b)
     meanD = tf.reduce_mean(D)
-    print meanD
 
     # We want to find the closest positive feature components, but right now the diagonal of the
     # pairwise distance matrix will be 0s -- a simple way to avoid selecting those
     # as the minimum distances is to make those values = the mean distance.
-    diag_mask = np.zeros((batch_size,batch_size))
-    np.fill_diagonal(diag_mask,meanD)
-    diag_mask = np.repeat(diag_mask[:,:,np.newaxis],output_size,axis=2)
-    D = D + diag_mask
+    # TODO: This currently sets the diagonal equal to 0, then adds the mean value on the diagonal.
+    # Make this less hacky.
+    diag_mask1 = np.ones((batch_size,batch_size))
+    np.fill_diagonal(diag_mask1,0)
+    diag_mask1 = np.tile(diag_mask1[:,:,np.newaxis],(1,1,output_size))
+    D = D * diag_mask1
+    diag_mask2 = np.zeros((batch_size,batch_size,output_size))
+    diag_inds = [(idx,idx,idy) for idx in range(batch_size) for idy in range(output_size)]
+    diag_mask3 = tf.scatter_nd_update(tf.Variable(diag_mask2,dtype='float32'),diag_inds,tf.tile([meanD],[batch_size*output_size]))
+    D = D + diag_mask3
 
     # Get the indices of anchor-positive pairs, and grab those from the distance matrix
     posIdx = np.floor(np.arange(0,batch_size)/ims_per_class).astype('int')
