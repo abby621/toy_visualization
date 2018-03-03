@@ -53,11 +53,11 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     learning_rate = float(learning_rate)
     batch_norm_decay = float(bn_decay)
 
-    if batch_size%30 != 0:
-        print 'Batch size must be divisible by 30!'
+    if batch_size%10 != 0:
+        print 'Batch size must be divisible by 10!'
         sys.exit(0)
 
-    ims_per_class = batch_size/30
+    ims_per_class = batch_size/10
 
     # Create data "batcher"
     train_data = CombinatorialTripletSet(train_filename, mean_file, img_size, crop_size, batch_size, num_pos=ims_per_class,isTraining=True)
