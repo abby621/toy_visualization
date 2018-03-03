@@ -109,12 +109,14 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     expanded_a = tf.expand_dims(feat, 1)
     expanded_b = tf.expand_dims(feat, 0)
     D = tf.abs(expanded_a-expanded_b)
+    meanD = tf.reduce_mean(D)
+    print meanD
 
     # We want to find the closest positive feature components, but right now the diagonal of the
     # pairwise distance matrix will be 0s -- a simple way to avoid selecting those
     # as the minimum distances is to make those values = the mean distance.
     diag_mask = np.zeros((batch_size,batch_size))
-    np.fill_diagonal(diag_mask,tf.reduce_mean(D))
+    np.fill_diagonal(diag_mask,meanD)
     diag_mask = np.repeat(diag_mask[:,:,np.newaxis],output_size,axis=2)
     D = D + diag_mask
 
@@ -136,12 +138,12 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
 
     # for every anchor feature component, find the closest feature components
     # in the "gallery" of features from different class than the anchor.
-    # to do this, make all the anchor-positive pairs in the pairwise feature vector high
+    # to do this, make all the anchor-positive pairs in the pairwise feature vector = mean dist
     # so that we will only consider the anchor-gallery pairs when we find the minimum gallery components
     ra, rb = np.meshgrid(np.arange(0,batch_size),np.arange(0,batch_size))
     positive_pair_inds = np.floor((ra)/ims_per_class) == np.floor((rb)/ims_per_class)
     mask = (1-positive_pair_inds).astype('float32')
-    mask[mask==0.] = tf.reduce_mean(D)
+    mask[mask==0.] = meanD
     mask = np.repeat(mask[:,:,np.newaxis],output_size,axis=2)
     only_galleryDists = D + mask
     min_galleryDist = tf.reduce_min(only_galleryDists,axis=1)
