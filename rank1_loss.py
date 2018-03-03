@@ -110,15 +110,15 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     expanded_b = tf.expand_dims(feat, 0)
     D = tf.abs(expanded_a-expanded_b)
 
-    # Mask the diagonals on the pairwise distance. The diagonal is all 0s
-    # but instead, we want to make our diagonals high so that we can easily
-    # find the minimum positive feature and not get a 0
+    # We want to find the closest positive images, but right now the diagonal of the
+    # pairwise distance matrix will be 0s -- a simple way to avoid selecting those
+    # as the minimum distances is to make those values super high.
     diag_mask = np.zeros((batch_size,batch_size))
     np.fill_diagonal(diag_mask,10000.)
     diag_mask = np.repeat(diag_mask[:,:,np.newaxis],output_size,axis=2)
     D = D + diag_mask
 
-    # get the indices of anchor-positive pairs, and grab those from the distance matrix
+    # Get the indices of anchor-positive pairs, and grab those from the distance matrix
     posIdx = np.floor(np.arange(0,batch_size)/ims_per_class).astype('int')
     posIdx10 = ims_per_class*posIdx
     posImInds = np.tile(posIdx10,(ims_per_class,1)).transpose()+np.tile(np.arange(0,ims_per_class),(batch_size,1))
