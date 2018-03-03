@@ -107,7 +107,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     expanded_a = tf.expand_dims(feat, 1)
     expanded_b = tf.expand_dims(feat, 0)
     D = tf.abs(expanded_a-expanded_b)
-    meanD = tf.reduce_mean(D)
+    maxD = tf.reduce_max(D)
 
     # We want to find the closest positive feature components, but right now the diagonal of the
     # pairwise distance matrix will be 0s -- a simple way to avoid selecting those
@@ -120,7 +120,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     D = D * diag_mask1
     diag_mask2 = np.zeros((batch_size,batch_size,output_size))
     diag_inds = [(idx,idx,idy) for idx in range(batch_size) for idy in range(output_size)]
-    diag_mask3 = tf.scatter_nd_update(tf.Variable(diag_mask2,dtype='float32'),diag_inds,tf.tile([meanD],[batch_size*output_size]))
+    diag_mask3 = tf.scatter_nd_update(tf.Variable(diag_mask2,dtype='float32'),diag_inds,tf.tile([maxD],[batch_size*output_size]))
     D = D + diag_mask3
 
     # Get the indices of anchor-positive pairs, and grab those from the distance matrix
