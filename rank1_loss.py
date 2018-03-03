@@ -110,7 +110,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     expanded_b = tf.expand_dims(feat, 0)
     D = tf.abs(expanded_a-expanded_b)
 
-    # We want to find the closest positive images, but right now the diagonal of the
+    # We want to find the closest positive feature components, but right now the diagonal of the
     # pairwise distance matrix will be 0s -- a simple way to avoid selecting those
     # as the minimum distances is to make those values super high.
     diag_mask = np.zeros((batch_size,batch_size))
