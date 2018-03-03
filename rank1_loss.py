@@ -130,24 +130,27 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
 
     # for every anchor feature component, find the closest positive feature components
     # min_posDist = tf.reduce_min(posDists,axis=1)
+
     # Richard idea: mean instead of min
+    # TODO: Can't just swap in mean, since I did the hacky bit where I set the diagonal = 10000
     mean_posDist = tf.reduce_mean(posDists,axis=1)
 
-    # for every anchor feature component, find the closest negative feature components
-    # to do this, make all the positive pairs in the pairwise feature vector high
-    # so that we will only consider the negative pairs when we find the minimum negative components
+    # for every anchor feature component, find the closest feature components
+    # in the "gallery" of features from different class than the anchor.
+    # to do this, make all the anchor-positive pairs in the pairwise feature vector high
+    # so that we will only consider the anchor-gallery pairs when we find the minimum gallery components
     ra, rb = np.meshgrid(np.arange(0,batch_size),np.arange(0,batch_size))
     positive_pair_inds = np.floor((ra)/ims_per_class) == np.floor((rb)/ims_per_class)
     mask = (1-positive_pair_inds).astype('float32')
     mask[mask==0.] = 10000.
     mask = np.repeat(mask[:,:,np.newaxis],output_size,axis=2)
-    only_negDists = D + mask
-    min_negDist = tf.reduce_min(only_negDists,axis=1)
+    only_galleryDists = D + mask
+    min_galleryDist = tf.reduce_min(only_galleryDists,axis=1)
 
     # Sum up the distances where the feature components are inverted:
-    # min(positive dists) > min(negative dists)
-    # inversions = tf.reduce_sum(tf.maximum(min_posDist - min_negDist, 0.),axis=1)
-    inversions = tf.reduce_sum(tf.maximum(mean_posDist - min_negDist, 0.),axis=1)
+    # min(anchor-positive dists) > min(anchor-gallery dists)
+    # inversions = tf.reduce_sum(tf.maximum(min_posDist - min_galleryDist, 0.),axis=1)
+    inversions = tf.reduce_sum(tf.maximum(mean_posDist - min_galleryDist, 0.),axis=1)
 
     # Loss is the mean of the inversions over the whole batch
     loss = tf.reduce_mean(inversions)
