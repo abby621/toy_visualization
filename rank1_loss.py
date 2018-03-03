@@ -206,7 +206,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
         _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
-        out_str = 'Step %d: loss = %.6f -- (%.3f sec)' % (step, loss_val,duration)
+        out_str = 'Step %d: loss = %.15f -- (%.3f sec)' % (step, loss_val,duration)
         print(out_str)
         if step % summary_iters == 0:
             # print(out_str)
