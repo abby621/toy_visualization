@@ -88,6 +88,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     # Queuing op loads data into input tensor
     image_batch = tf.placeholder(tf.float32, shape=[batch_size, crop_size[0], crop_size[0], 3])
     label_batch = tf.placeholder(tf.int32, shape=(batch_size))
+    im_id_batch = tf.placeholder(tf.int32, shape=(batch_size))
 
     repMeanIm = np.tile(np.expand_dims(train_data.meanImage,0),[batch_size,1,1,1])
     if train_data.isOverfitting:
@@ -107,54 +108,39 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     expanded_a = tf.expand_dims(feat, 1)
     expanded_b = tf.expand_dims(feat, 0)
     D = tf.abs(expanded_a-expanded_b)
-    meanD = tf.reduce_mean(D)
 
-    # We want to find the closest positive feature components, but right now the diagonal of the
-    # pairwise distance matrix will be 0s -- a simple way to avoid selecting those
-    # as the minimum distances is to make those values = the mean distance.
-    # TODO: This currently sets the diagonal equal to 0, then adds the mean value on the diagonal.
-    # Make this less hacky.
-    diag_mask1 = np.ones((batch_size,batch_size))
-    np.fill_diagonal(diag_mask1,0)
-    diag_mask1 = np.tile(diag_mask1[:,:,np.newaxis],(1,1,output_size))
-    D = D * diag_mask1
-    diag_mask2 = np.zeros((batch_size,batch_size,output_size))
-    diag_inds = [(idx,idx,idy) for idx in range(batch_size) for idy in range(output_size)]
-    diag_mask3 = tf.scatter_nd_update(tf.Variable(diag_mask2,dtype='float32'),diag_inds,tf.tile([meanD],[batch_size*output_size]))
-    D = D + diag_mask3
+    # To avoid trivial solutions based on the batch ordering, we shuffle our batches.
+    # This means we need to figure out what our anchor-positive indices are in the distance
+    # matrix, what our "gallery" (anchor-negative) indices are, and
+    # also handle the case along the diagonal (same exact image).
+    rep_im_id_batch = tf.reshape(tf.tile(im_id_batch,[batch_size]),(batch_size,batch_size))
+    same_im = rep_im_id_batch - tf.transpose(rep_im_id_batch)
+    zero = tf.constant(0,dtype=tf.int32)
+    same_im_where = tf.equal(same_im,zero)
+    same_im_inds = tf.where(same_im_where)
 
-    # Get the indices of anchor-positive pairs, and grab those from the distance matrix
-    posIdx = np.floor(np.arange(0,batch_size)/ims_per_class).astype('int')
-    posIdx10 = ims_per_class*posIdx
-    posImInds = np.tile(posIdx10,(ims_per_class,1)).transpose()+np.tile(np.arange(0,ims_per_class),(batch_size,1))
-    anchorInds = np.tile(np.arange(0,batch_size),(ims_per_class,1)).transpose()
-    posImInds_flat = posImInds.ravel()
-    anchorInds_flat = anchorInds.ravel()
-    posPairInds = zip(posImInds_flat,anchorInds_flat)
-    posDists = tf.reshape(tf.gather_nd(D,posPairInds),(batch_size,ims_per_class,output_size))
+    rep_label_batch = tf.reshape(tf.tile(label_batch,[batch_size]),(batch_size,batch_size))
+    same_label = rep_label_batch - tf.transpose(rep_label_batch)
+    zero = tf.constant(0,dtype=tf.int32)
+    gallery_where = tf.not_equal(same_label,zero)
+    pos_where = tf.not_equal(tf.equal(same_label,zero),same_im_where) # we don't care about + pairs that are the exact same image
+    gallery_inds = tf.where(gallery_where)
+    pos_inds = tf.where(pos_where)
 
+    # Get the indices of anchor-positive pairs, and grab those from the distance matrix and then
     # for every anchor feature component, find the closest positive feature components
-    # min_posDist = tf.reduce_min(posDists,axis=1)
+    posDists = tf.reshape(tf.gather_nd(D,pos_inds),(batch_size,ims_per_class,output_size))
+    min_posDist = tf.reduce_min(posDists,axis=1)
 
-    # Richard idea: mean instead of min
-    mean_posDist = tf.reduce_mean(posDists,axis=1)
-
-    # for every anchor feature component, find the closest feature components
-    # in the "gallery" of features from different class than the anchor.
-    # to do this, make all the anchor-positive pairs in the pairwise feature vector = mean dist
-    # so that we will only consider the anchor-gallery pairs when we find the minimum gallery components
-    ra, rb = np.meshgrid(np.arange(0,batch_size),np.arange(0,batch_size))
-    positive_pair_inds = np.floor((ra)/ims_per_class) == np.floor((rb)/ims_per_class)
-    mask = (1-positive_pair_inds).astype('float32')
-    mask[mask==0.] = 10000.
-    mask = np.repeat(mask[:,:,np.newaxis],output_size,axis=2)
-    only_galleryDists = D + mask
-    min_galleryDist = tf.reduce_min(only_galleryDists,axis=1)
+    # Get the incides of the "gallery" of anchor-negative pairs, and grab those from
+    # the distance matrix and then for every anchor feature component,
+    # find the closest positive feature components
+    galleryDists = tf.reshape(tf.gather_nd(D,gallery_inds),(batch_size,ims_per_class,output_size))
+    min_galleryDist = tf.reduce_min(galleryDists,axis=1)
 
     # Sum up the distances where the feature components are inverted:
     # min(anchor-positive dists) > min(anchor-gallery dists)
-    # inversions = tf.reduce_sum(tf.maximum(min_posDist - min_galleryDist, 0.),axis=1)
-    inversions = tf.reduce_sum(tf.maximum(mean_posDist - min_galleryDist, 0.),axis=1)
+    inversions = tf.reduce_sum(tf.maximum(min_posDist - min_galleryDist, 0.),axis=1)
 
     # Loss is the mean of the inversions over the whole batch
     loss = tf.reduce_mean(inversions)
@@ -203,7 +189,13 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     for step in range(num_iters):
         start_time = time.time()
         batch, labels, ims = train_data.getBatch()
-        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels})
+        # shuffle our batch so that we don't always have the same +/- indices
+        rand_order = np.arange(batch_size)
+        np.random.shuffle(rand_order)
+        batch = batch[rand_order,:,:,:]
+        labels = labels[rand_order]
+        ims = np.array(ims)[rand_order]
+        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels, im_id_batch: rand_order})
         end_time = time.time()
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.15f -- (%.3f sec)' % (step, loss_val,duration)
