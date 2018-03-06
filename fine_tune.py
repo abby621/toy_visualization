@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 # python training.py margin output_size learning_rate is_overfitting l1_weight bn_decay
-# python fine_tune.py .3 120 1000 .0001 False '2' .00001 .9
+# python fine_tune.py .3 100 1000 .0001 False '2' .00001 .9
 # if ilsvrc:
-# python fine_tune.py .3 120 1001 .0001 False '2' .00001 .9
+# python fine_tune.py .3 100 1001 .0001 False '2' .00001 .995
 """
 
 import tensorflow as tf
@@ -61,11 +61,11 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     l1_weight = float(l1_weight)
     batch_norm_decay = float(bn_decay)
 
-    if batch_size%30 != 0:
-        print 'Batch size must be divisible by 30!'
+    if batch_size%10 != 0:
+        print 'Batch size must be divisible by 10!'
         sys.exit(0)
 
-    num_pos_examples = batch_size/30
+    num_pos_examples = batch_size/10
 
     # Create data "batcher"
     train_data = CombinatorialTripletSet(train_filename, mean_file, img_size, crop_size, batch_size, num_pos_examples, isTraining=True, isOverfitting=is_overfitting)
