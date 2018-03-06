@@ -149,7 +149,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
 
     # Sum up the distances where the feature components are inverted:
     # min(anchor-positive dists) > min(anchor-gallery dists) - margin
-    inversions = tf.reduce_sum(tf.maximum(margin + min_posDist - min_galleryDist, 0.),axis=1)
+    inversions = tf.reduce_sum(tf.maximum(min_posDist - margin - min_galleryDist, 0.),axis=1)
 
     # Loss is the mean of the inversions over the whole batch
     loss = tf.reduce_mean(inversions)
