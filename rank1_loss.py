@@ -129,14 +129,22 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
 
     # Get the indices of anchor-positive pairs, and grab those from the distance matrix and then
     # for every anchor feature component, find the closest positive feature components
-    posDists = tf.reshape(tf.gather_nd(D,pos_inds),(batch_size,ims_per_class,output_size))
-    min_posDist = tf.reduce_min(posDists,axis=1)
+    num_pos = batch_size*(ims_per_class-1)
+    _, sorted_pos_inds = tf.nn.top_k(tf.squeeze(tf.slice(pos_inds,[0,1],[-1,1])), k=num_pos)
+    posDists = tf.gather_nd(D,pos_inds)
+    posDists2 = tf.gather(posDists,sorted_pos_inds)
+    posDists3 = tf.reshape(posDists2,(batch_size,ims_per_class-1,output_size))
+    min_posDist = tf.reduce_min(posDists3,axis=1)
 
     # Get the incides of the "gallery" of anchor-negative pairs, and grab those from
     # the distance matrix and then for every anchor feature component,
     # find the closest positive feature components
-    galleryDists = tf.reshape(tf.gather_nd(D,gallery_inds),(batch_size,ims_per_class,output_size))
-    min_galleryDist = tf.reduce_min(galleryDists,axis=1)
+    num_gallery = batch_size*(ims_per_class-1)*ims_per_class
+    _, sorted_gallery_inds = tf.nn.top_k(tf.squeeze(tf.slice(gallery_inds,[0,1],[-1,1])), k=num_gallery)
+    galleryDists = tf.gather_nd(D,gallery_inds)
+    galleryDists2 = tf.gather(galleryDists,sorted_gallery_inds)
+    galleryDists3 = tf.reshape(galleryDists2,(batch_size,ims_per_class*(ims_per_class-1),output_size))
+    min_galleryDist = tf.reduce_min(galleryDists3,axis=1)
 
     # Sum up the distances where the feature components are inverted:
     # min(anchor-positive dists) > min(anchor-gallery dists)
