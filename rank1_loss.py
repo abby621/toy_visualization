@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-# python rank1_loss.py batch_size output_size learning_rate whichGPU bn_decay
-# python rank1_loss.py 120 256 .0001 '1' .9
+# python rank1_loss.py margin batch_size output_size learning_rate whichGPU bn_decay
+# python rank1_loss.py .3 120 256 .0001 '1' .9
 """
 
 import tensorflow as tf
@@ -21,7 +21,7 @@ import socket
 import signal
 import sys
 
-def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
+def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     def handler(signum, frame):
         print 'Saving checkpoint before closing'
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
@@ -48,6 +48,7 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     summary_iters = 10
     save_iters = 100
 
+    margin = float(margin)
     batch_size = int(batch_size)
     output_size = int(output_size)
     learning_rate = float(learning_rate)
@@ -147,8 +148,8 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
     min_galleryDist = tf.reduce_min(galleryDists3,axis=1)
 
     # Sum up the distances where the feature components are inverted:
-    # min(anchor-positive dists) > min(anchor-gallery dists)
-    inversions = tf.reduce_sum(tf.maximum(min_posDist - min_galleryDist, 0.),axis=1)
+    # min(anchor-positive dists) > min(anchor-gallery dists) - margin
+    inversions = tf.reduce_sum(tf.maximum(margin + min_posDist - min_galleryDist, 0.),axis=1)
 
     # Loss is the mean of the inversions over the whole batch
     loss = tf.reduce_mean(inversions)
@@ -237,10 +238,11 @@ def main(batch_size,output_size,learning_rate,whichGPU, bn_decay):
 if __name__ == "__main__":
     args = sys.argv
     if len(args) < 5:
-        print 'Expected input parameters:batch_size, output_size, learning_rate, whichGPU, bn_decay'
-    batch_size = args[1]
-    output_size = args[2]
-    learning_rate = args[3]
-    whichGPU = args[4]
-    bn_decay = args[5]
-    main(batch_size,output_size,learning_rate,whichGPU,bn_decay)
+        print 'Expected input parameters:margin, batch_size, output_size, learning_rate, whichGPU, bn_decay'
+    margin = args[1]
+    batch_size = args[2]
+    output_size = args[3]
+    learning_rate = args[4]
+    whichGPU = args[5]
+    bn_decay = args[6]
+    main(margin,batch_size,output_size,learning_rate,whichGPU,bn_decay)
