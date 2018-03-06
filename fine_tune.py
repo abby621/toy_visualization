@@ -3,7 +3,7 @@
 # python training.py margin output_size learning_rate is_overfitting l1_weight bn_decay
 # python fine_tune.py .3 100 1000 .0001 False '2' .00001 .9
 # if ilsvrc:
-# python fine_tune.py .3 100 1001 .0001 False '2' .00001 .995
+# python fine_tune.py .3 100 256 .0001 False '2' .00001 .995
 """
 
 import tensorflow as tf

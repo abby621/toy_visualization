@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 # python rank1_loss.py margin batch_size output_size learning_rate whichGPU bn_decay
-# python rank1_loss.py .3 100 256 .001 '1' .9
+# python rank1_loss.py .05 100 256 .001 '1' .9
 """
 
 import tensorflow as tf
@@ -149,7 +149,10 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
 
     # Sum up the distances where the feature components are inverted:
     # min(anchor-positive dists) > margin + min(anchor-gallery dists)
-    inversions = tf.reduce_sum(tf.maximum(min_posDist - margin - min_galleryDist, 0.),axis=1)
+    # TODO: These distances aren't working well; how can we get back to counts?
+
+    # inversions = tf.reduce_sum(tf.maximum(min_posDist - margin - min_galleryDist, 0.),axis=1)
+    inversions = tf.norm(tf.maximum(min_posDist - min_galleryDist, 0.),ord=.01,axis=1)
 
     # Loss is the mean of the inversions over the whole batch
     loss = tf.reduce_mean(inversions)
