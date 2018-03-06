@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 # python rank1_loss.py margin batch_size output_size learning_rate whichGPU bn_decay
-# python rank1_loss.py .3 120 256 .0001 '1' .9
+# python rank1_loss.py .3 100 256 .001 '1' .9
 """
 
 import tensorflow as tf
@@ -144,7 +144,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     _, sorted_gallery_inds = tf.nn.top_k(tf.squeeze(tf.slice(gallery_inds,[0,1],[-1,1])), k=num_gallery)
     galleryDists = tf.gather_nd(D,gallery_inds)
     galleryDists2 = tf.gather(galleryDists,sorted_gallery_inds)
-    galleryDists3 = tf.reshape(galleryDists2,(batch_size,ims_per_class*(ims_per_class-1),output_size))
+    galleryDists3 = tf.reshape(galleryDists2,(batch_size,batch_size-ims_per_class,output_size))
     min_galleryDist = tf.reduce_min(galleryDists3,axis=1)
 
     # Sum up the distances where the feature components are inverted:
