@@ -152,7 +152,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     # TODO: These distances aren't working well; how can we get back to counts?
 
     # inversions = tf.reduce_sum(tf.maximum(min_posDist - margin - min_galleryDist, 0.),axis=1)
-    inversions = tf.norm(tf.maximum(min_posDist - margin - min_galleryDist, 0.),ord=.1,axis=1)
+    inversions = tf.norm(tf.maximum(min_posDist - margin - min_galleryDist, 0.),ord=.5,axis=1)
 
     # Loss is the mean of the inversions over the whole batch
     loss = tf.reduce_mean(inversions)
