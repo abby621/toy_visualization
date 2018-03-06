@@ -204,11 +204,12 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
         batch = batch[rand_order,:,:,:]
         labels = labels[rand_order]
         ims = np.array(ims)[rand_order]
-        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels, im_id_batch: rand_order})
+        _, mpd,mgd, loss_val = sess.run([train_op, min_posDist, min_galleryDist, loss], feed_dict={image_batch: batch, label_batch: labels, im_id_batch: rand_order})
         end_time = time.time()
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.15f -- (%.3f sec)' % (step, loss_val,duration)
         print(out_str)
+        print(mpd,mgd)
         if step % summary_iters == 0:
             # print(out_str)
             train_log_file.write(out_str+'\n')
