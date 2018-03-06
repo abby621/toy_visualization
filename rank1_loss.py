@@ -209,7 +209,6 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.15f -- (%.3f sec)' % (step, loss_val,duration)
         print(out_str)
-        print(mpd,mgd)
         if step % summary_iters == 0:
             # print(out_str)
             train_log_file.write(out_str+'\n')
