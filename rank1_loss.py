@@ -89,6 +89,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     # Queuing op loads data into input tensor
     image_batch = tf.placeholder(tf.float32, shape=[batch_size, crop_size[0], crop_size[0], 3])
     label_batch = tf.placeholder(tf.int32, shape=(batch_size))
+    im_id_batch = tf.placeholder(tf.int32, shape=(batch_size))
 
     repMeanIm = np.tile(np.expand_dims(train_data.meanImage,0),[batch_size,1,1,1])
     if train_data.isOverfitting:
