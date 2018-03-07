@@ -133,7 +133,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     _, sorted_pos_inds = tf.nn.top_k(-1*tf.squeeze(tf.slice(pos_inds,[0,1],[-1,1])), k=num_pos)
     posDists = tf.gather_nd(D,pos_inds)
     posDists2 = tf.gather(posDists,sorted_pos_inds)
-    posDists3 = tf.reshape(posDists2,(ims_per_class-1,batch_size,output_size))
+    posDists3 = tf.reshape(posDists2,(batch_size,ims_per_class-1,output_size))
 
     # Get the incides of the "gallery" of anchor-negative pairs, and grab those from
     # the distance matrix and then for every anchor feature component,
