@@ -110,7 +110,8 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     expanded_b = tf.expand_dims(feat, 0)
     D = tf.abs(expanded_a-expanded_b)
 
-    # We need to figure out what our anchor-positive indices are in the distance
+    # To avoid trivial solutions based on the batch ordering, we shuffle our batches.
+    # This means we need to figure out what our anchor-positive indices are in the distance
     # matrix, what our "gallery" (anchor-negative) indices are, and
     # also handle the case along the diagonal (same exact image).
     rep_im_id_batch = tf.reshape(tf.tile(im_id_batch,[batch_size]),(batch_size,batch_size))
@@ -127,31 +128,29 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     gallery_inds = tf.where(gallery_where)
     pos_inds = tf.where(pos_where)
 
-    # Get the indices of anchor-positive pairs, and grab those from the distance matrix and then
-    # for every anchor feature component, find the closest positive feature components
+    # Get the indices of anchor-positive pairs, and grab those from the distance matrix
     num_pos = batch_size*(ims_per_class-1)
     _, sorted_pos_inds = tf.nn.top_k(tf.squeeze(tf.slice(pos_inds,[0,1],[-1,1])), k=num_pos)
     posDists = tf.gather_nd(D,pos_inds)
     posDists2 = tf.gather(posDists,sorted_pos_inds)
     posDists3 = tf.reshape(posDists2,(batch_size,ims_per_class-1,output_size))
-    min_posDist = tf.reduce_min(posDists3,axis=1)
 
     # Get the incides of the "gallery" of anchor-negative pairs, and grab those from
     # the distance matrix and then for every anchor feature component,
-    # find the closest positive feature components
+    # find the closest feature components from the gallery
     num_gallery = batch_size*(ims_per_class-1)*ims_per_class
     _, sorted_gallery_inds = tf.nn.top_k(tf.squeeze(tf.slice(gallery_inds,[0,1],[-1,1])), k=num_gallery)
     galleryDists = tf.gather_nd(D,gallery_inds)
     galleryDists2 = tf.gather(galleryDists,sorted_gallery_inds)
-    galleryDists3 = tf.reshape(galleryDists2,(batch_size,batch_size-ims_per_class,output_size))
-    min_galleryDist = tf.reduce_min(galleryDists3,axis=1)
+    galleryDists3 = tf.reshape(galleryDists2,(batch_size,ims_per_class*(ims_per_class-1),output_size))
+    min_galleryDist = tf.tile(tf.expand_dims(tf.reduce_min(galleryDists3,axis=1),1),(1,ims_per_class-1,1))
 
     # Sum up the distances where the feature components are inverted:
-    # min(anchor-positive dists) > margin + min(anchor-gallery dists)
-    # TODO: These distances aren't working well; how can we get back to counts?
-    inversions = tf.reduce_sum(tf.maximum(min_posDist - margin - min_galleryDist, 0.),axis=1)
+    # posDists3 > min(anchor-gallery dists)
+    inversions = tf.reshape(tf.reduce_sum(tf.maximum(posDists3 - min_galleryDist, 0.),axis=2),[batch_size*(ims_per_class-1)])
 
     # Loss is the mean of the inversions over the whole batch
+    # TODO: try both reduce min and reduce mean
     loss = tf.reduce_mean(inversions)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
