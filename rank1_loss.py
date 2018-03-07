@@ -89,7 +89,6 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     # Queuing op loads data into input tensor
     image_batch = tf.placeholder(tf.float32, shape=[batch_size, crop_size[0], crop_size[0], 3])
     label_batch = tf.placeholder(tf.int32, shape=(batch_size))
-    im_id_batch = tf.placeholder(tf.int32, shape=(batch_size))
 
     repMeanIm = np.tile(np.expand_dims(train_data.meanImage,0),[batch_size,1,1,1])
     if train_data.isOverfitting:
@@ -130,16 +129,16 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
 
     # Get the indices of anchor-positive pairs, and grab those from the distance matrix
     num_pos = batch_size*(ims_per_class-1)
-    _, sorted_pos_inds = tf.nn.top_k(tf.squeeze(tf.slice(pos_inds,[0,1],[-1,1])), k=num_pos)
+    _, sorted_pos_inds = tf.nn.top_k(-1*tf.squeeze(tf.slice(pos_inds,[0,1],[-1,1])), k=num_pos)
     posDists = tf.gather_nd(D,pos_inds)
     posDists2 = tf.gather(posDists,sorted_pos_inds)
-    posDists3 = tf.reshape(posDists2,(batch_size,ims_per_class-1,output_size))
+    posDists3 = tf.reshape(posDists2,(ims_per_class-1,batch_size,output_size))
 
     # Get the incides of the "gallery" of anchor-negative pairs, and grab those from
     # the distance matrix and then for every anchor feature component,
     # find the closest feature components from the gallery
     num_gallery = batch_size*(ims_per_class-1)*ims_per_class
-    _, sorted_gallery_inds = tf.nn.top_k(tf.squeeze(tf.slice(gallery_inds,[0,1],[-1,1])), k=num_gallery)
+    _, sorted_gallery_inds = tf.nn.top_k(-1*tf.squeeze(tf.slice(gallery_inds,[0,1],[-1,1])), k=num_gallery)
     galleryDists = tf.gather_nd(D,gallery_inds)
     galleryDists2 = tf.gather(galleryDists,sorted_gallery_inds)
     galleryDists3 = tf.reshape(galleryDists2,(batch_size,ims_per_class*(ims_per_class-1),output_size))
@@ -147,10 +146,9 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
 
     # Sum up the distances where the feature components are inverted:
     # posDists3 > min(anchor-gallery dists)
-    inversions = tf.reshape(tf.reduce_sum(tf.maximum(posDists3 - min_galleryDist + margin, 0.),axis=2),[batch_size*(ims_per_class-1)])
+    inversions = tf.reshape(tf.reduce_sum(tf.maximum(posDists3 - min_galleryDist, 0.),axis=2),[batch_size*(ims_per_class-1)])
 
     # Loss is the mean of the inversions over the whole batch
-    # TODO: try both reduce min and reduce mean
     loss = tf.reduce_mean(inversions)
 
     # slightly counterintuitive to not define "init_op" first, but tf vars aren't known until added to graph
@@ -197,13 +195,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     for step in range(num_iters):
         start_time = time.time()
         batch, labels, ims = train_data.getBatch()
-        # shuffle our batch so that we don't always have the same +/- indices
-        rand_order = np.arange(batch_size)
-        np.random.shuffle(rand_order)
-        batch = batch[rand_order,:,:,:]
-        labels = labels[rand_order]
-        ims = np.array(ims)[rand_order]
-        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels, im_id_batch: rand_order})
+        _, loss_val = sess.run([train_op, loss], feed_dict={image_batch: batch, label_batch: labels})
         end_time = time.time()
         duration = end_time-start_time
         out_str = 'Step %d: loss = %.15f -- (%.3f sec)' % (step, loss_val,duration)
