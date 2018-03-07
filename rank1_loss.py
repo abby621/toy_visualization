@@ -110,8 +110,7 @@ def main(margin,batch_size,output_size,learning_rate,whichGPU, bn_decay):
     expanded_b = tf.expand_dims(feat, 0)
     D = tf.abs(expanded_a-expanded_b)
 
-    # To avoid trivial solutions based on the batch ordering, we shuffle our batches.
-    # This means we need to figure out what our anchor-positive indices are in the distance
+    # We need to figure out what our anchor-positive indices are in the distance
     # matrix, what our "gallery" (anchor-negative) indices are, and
     # also handle the case along the diagonal (same exact image).
     rep_im_id_batch = tf.reshape(tf.tile(im_id_batch,[batch_size]),(batch_size,batch_size))
