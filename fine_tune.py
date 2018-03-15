@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-# python training.py margin output_size learning_rate is_overfitting l1_weight bn_decay
-# python fine_tune.py .3 100 1000 .0001 False '2' .00001 .9
+# python training.py margin output_size learning_rate is_overfitting l1_weight bn_decay pretrained_net
+# python fine_tune.py .3 100 1000 .0001 False '2' .00001 .9 '/pless_nfs/home/datasets/traffickcam/resnet_v2_50.ckpt'
 # if ilsvrc:
-# python fine_tune.py .3 100 256 .0001 False '2' .00001 .995
+# python fine_tune.py .3 100 256 .0001 False '2' .00001 .995 '/pless_nfs/home/datasets/traffickcam/resnet_v2_50.ckpt'
 """
 
 import tensorflow as tf
@@ -23,7 +23,7 @@ import socket
 import signal
 import sys
 
-def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight, bn_decay):
+def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight, bn_decay,pretrined_net):
     def handler(signum, frame):
         print 'Saving checkpoint before closing'
         pretrained_net = os.path.join(ckpt_dir, 'checkpoint-'+param_str)
@@ -37,11 +37,13 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     log_dir = './output/logs'
     train_filename = './train.txt'
     test_filename = './val.txt'
-    if 'abby' in socket.gethostname().lower():
+    if 'abby' in hostname:
         mean_file = '/Users/abby/Documents/repos/triplepalooza/models/traffickcam/tc_mean_im.npy'
+    elif 'lilou' in hostname:
+        mean_file = '/pless_nfs/home/datasets/traffickcam/tc_mean_im.npy'
     else:
         mean_file = '/project/focus/abby/triplepalooza/models/traffickcam/tc_mean_im.npy'
-    pretrained_net = '/project/focus/abby/triplepalooza/models/ilsvrc-2012/resnet_v2_50.ckpt'
+
     img_size = [256, 256]
     crop_size = [224, 224]
     num_iters = 200000
@@ -227,8 +229,8 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
 
 if __name__ == "__main__":
     args = sys.argv
-    if len(args) < 5:
-        print 'Expected four input parameters: margin, output_size, learning_rate, is_overfitting, whichGPU, l1_weight, bn_decay'
+    if len(args) < 9:
+        print 'Expected input parameters: margin, output_size, learning_rate, is_overfitting, whichGPU, l1_weight, bn_decay, pretrained_net'
     margin = args[1]
     batch_size = args[2]
     output_size = args[3]
@@ -237,4 +239,10 @@ if __name__ == "__main__":
     whichGPU = args[6]
     l1_weight = args[7]
     bn_decay = args[8]
-    main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight,bn_decay)
+
+    if len(args) > 9:
+        pretrained_net = args[9]
+    else:
+        pretrained_net = None
+
+    main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_weight,bn_decay,pretrained_net)
