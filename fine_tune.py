@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 # python training.py margin output_size learning_rate is_overfitting l1_weight bn_decay pretrained_net
-# python fine_tune.py .3 100 1000 .0001 False '2' .00001 .9 '/pless_nfs/home/datasets/traffickcam/resnet_v2_50.ckpt'
+# python fine_tune.py .3 100 1000 .0001 False '2' .00001 .9 None
 # if ilsvrc:
 # python fine_tune.py .3 100 256 .0001 False '2' .00001 .995 '/pless_nfs/home/datasets/traffickcam/resnet_v2_50.ckpt'
 """
@@ -37,6 +37,8 @@ def main(margin,batch_size,output_size,learning_rate,is_overfitting,whichGPU,l1_
     log_dir = './output/logs'
     train_filename = './train.txt'
     test_filename = './val.txt'
+
+    hostname = socket.gethostname().lower()
     if 'abby' in hostname:
         mean_file = '/Users/abby/Documents/repos/triplepalooza/models/traffickcam/tc_mean_im.npy'
     elif 'lilou' in hostname:
